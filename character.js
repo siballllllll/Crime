@@ -1,5 +1,38 @@
+// Directional SD detective atlas. Equal source scale keeps walking frames consistent.
+const atlas=new Image();
+const rows={down:0,right:1,up:2,left:3};
+let frames=null,scale=1;
+atlas.onload=()=>{
+ const scratch=document.createElement('canvas');scratch.width=atlas.naturalWidth;scratch.height=atlas.naturalHeight;
+ const context=scratch.getContext('2d',{willReadFrequently:true});context.drawImage(atlas,0,0);
+ const cw=Math.floor(atlas.naturalWidth/4),ch=Math.floor(atlas.naturalHeight/4);
+ frames=[];let tallest=0;
+ for(let row=0;row<4;row++)for(let col=0;col<4;col++){
+  const pixels=context.getImageData(col*cw,row*ch,cw,ch).data;
+  let left=cw,top=ch,right=-1,bottom=-1;
+  for(let y=0;y<ch;y++)for(let x=0;x<cw;x++)if(pixels[(y*cw+x)*4+3]>60){left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}
+  if(right<left){frames=null;return;}
+  const width=right-left+1,height=bottom-top+1;
+  frames.push({x:col*cw+left,y:row*ch+top,width,height});tallest=Math.max(tallest,height);
+ }
+ scale=96/tallest;
+};
+atlas.src='./assets/detective-sprites.png?v=1';
+export function drawInvestigator(ctx,x,y,time,moving,direction,phase){
+ if(!frames){drawFallback(ctx,x,y,time,moving,direction,phase);return;}
+ const row=rows[direction]??0;
+ const walk=[1,2,3,2];const col=moving?walk[Math.floor(phase*4)%4]:0;
+ const frame=frames[row*4+col];
+ const width=Math.round(frame.width*scale),height=Math.round(frame.height*scale);
+ const breath=moving?0:Math.round(Math.sin(time/650));
+ ctx.save();ctx.imageSmoothingEnabled=false;
+ ctx.fillStyle='#08192255';ctx.beginPath();ctx.ellipse(Math.round(x),Math.round(y),18,4,0,0,Math.PI*2);ctx.fill();
+ ctx.drawImage(atlas,frame.x,frame.y,frame.width,frame.height,Math.round(x-width/2),Math.round(y-height-breath),width,height);
+ ctx.restore();
+}
+
 // Native-resolution character: articulated limbs, directional face and coat layers.
-export function drawInvestigator(ctx,x,y,time,moving,direction,phase) {
+function drawFallback(ctx,x,y,time,moving,direction,phase) {
  const side=direction==='left'||direction==='right',back=direction==='up';
  const cycle=phase*Math.PI*2, stride=moving?Math.sin(cycle):0;
  const bob=moving?Math.abs(Math.sin(cycle))*1.4:Math.sin(time/650)*.55;

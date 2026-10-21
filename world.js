@@ -1,4 +1,4 @@
-import {createHub} from './hub.js?v=4';
+import {createHub} from './hub.js?v=5';
 import * as T from './vendor/three.module.js';
 import {illustration} from './illustrations.js';
 import {START,movePlayer} from './navigation.js';
@@ -123,6 +123,6 @@ function toggleFieldMenu(){releaseControls();fieldMenu=!fieldMenu;$('#game').cla
 const fieldBar=document.createElement('div');fieldBar.className='field-bar';fieldBar.innerHTML='<button id="field-exit">← 연구소 지도</button><span>배양실 02 · 현장 조사</span><button id="field-menu">도구·자료 [I]</button>';$('#game').appendChild(fieldBar);
 $('#field-exit').onclick=showHub;$('#field-menu').onclick=toggleFieldMenu;
 function labMenu(){modal('분석실 · 검사 장비','<p>현장에서 확보한 시료를 검사합니다. 시료 튜브와 증폭 DNA는 아래 버튼에서 장비에 넣을 수 있습니다.</p>',[['시료를 PCR 장비에 넣기',()=>{s.selected=has('sample')?'sample':null;save();inspectPcr()}],['증폭 DNA를 서열 분석기에 넣기',()=>{s.selected=has('amp')?'amp':null;save();inspectSequence()}],['확보한 검사 기록',()=>{$('#modal').close();openNotes('board')}]]);}
-$('#game').appendChild(createHub({enter:enterField,notes:openNotes,lab:labMenu,settings:()=>$('#settings-button').click()}));
+$('#game').appendChild(createHub({enter:enterField,notes:openNotes,lab:labMenu,settings:()=>$('#settings-button').click(),observe:(title,body)=>modal('물건을 관찰 · '+title,'<p>'+body+'</p>')}));
 window.addEventListener('keydown',e=>{if(!firstPerson||$('#game').hidden||$('#modal').open||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.repeat)return;if(e.code==='KeyI'||e.code==='Escape'){e.preventDefault();toggleFieldMenu();}});
 showHub();
