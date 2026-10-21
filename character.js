@@ -19,7 +19,7 @@ atlas.onload=()=>{
  }
  scale=96/tallest;
 };
-atlas.src='./assets/detective-sprites.png?v=2';
+atlas.src='./assets/detective-sprites.png?v=3';
 export function drawInvestigator(ctx,x,y,time,moving,direction,phase){
  if(!frames){drawFallback(ctx,x,y,time,moving,direction,phase);return;}
  const row=rows[direction]??0;

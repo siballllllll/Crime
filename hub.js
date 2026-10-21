@@ -1,5 +1,5 @@
 import {createAmbience} from './ambience.js?v=1';
-import {drawInvestigator} from './character.js?v=3';
+import {drawInvestigator} from './character.js?v=4';
 export function createHub({enter,notes,lab,settings,observe}) {
  const hub=document.createElement('section');hub.id='research-hub';
  hub.innerHTML=`<header class="hub-header"><div><span>BIO CASEFILES · CASE 001</span><h1>사라진 신품종</h1><p>새봄 생명연구소 / 현장 수사</p></div><button id="hub-settings">화면 설정</button></header><div class="pixel-map detailed-map quarter-map"><canvas width="1280" height="854" tabindex="0" aria-label="연구소 복도. WASD나 방향키로 이동하고 문 앞에서 E로 조사. 바닥을 눌러 이동할 수도 있습니다."></canvas><div class="map-caption">SAEBOM INSTITUTE <span>배양 연구동 · 1F</span></div><button class="map-interact" disabled>문 앞으로 이동하세요</button></div><footer class="hub-footer"><p>WASD / 방향키로 이동 · 바닥을 눌러 이동 · 문 앞에서 E 또는 조사 버튼</p><div><button data-note="suspects">용의자 자료</button><button data-note="board">내 증거 보드</button><button data-note="report">수사 보고서</button></div><small>배양실에서는 1인칭으로 현장을 조사합니다. 수집한 기록은 장소를 옮겨도 유지됩니다.</small></footer>`;
