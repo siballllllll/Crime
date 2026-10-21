@@ -5,19 +5,21 @@ let frames=null,scale=1;
 atlas.onload=()=>{
  const scratch=document.createElement('canvas');scratch.width=atlas.naturalWidth;scratch.height=atlas.naturalHeight;
  const context=scratch.getContext('2d',{willReadFrequently:true});context.drawImage(atlas,0,0);
- const cw=Math.floor(atlas.naturalWidth/4),ch=Math.floor(atlas.naturalHeight/4);
+ const cellWidth=atlas.naturalWidth/4,cellHeight=atlas.naturalHeight/4;
  frames=[];let tallest=0;
  for(let row=0;row<4;row++)for(let col=0;col<4;col++){
-  const pixels=context.getImageData(col*cw,row*ch,cw,ch).data;
+  const cellX=Math.round(col*cellWidth),cellY=Math.round(row*cellHeight);
+  const cw=Math.round((col+1)*cellWidth)-cellX,ch=Math.round((row+1)*cellHeight)-cellY;
+  const pixels=context.getImageData(cellX,cellY,cw,ch).data;
   let left=cw,top=ch,right=-1,bottom=-1;
   for(let y=0;y<ch;y++)for(let x=0;x<cw;x++)if(pixels[(y*cw+x)*4+3]>60){left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}
   if(right<left){frames=null;return;}
   const width=right-left+1,height=bottom-top+1;
-  frames.push({x:col*cw+left,y:row*ch+top,width,height});tallest=Math.max(tallest,height);
+  frames.push({x:cellX+left,y:cellY+top,width,height});tallest=Math.max(tallest,height);
  }
  scale=96/tallest;
 };
-atlas.src='./assets/detective-sprites.png?v=1';
+atlas.src='./assets/detective-sprites.png?v=2';
 export function drawInvestigator(ctx,x,y,time,moving,direction,phase){
  if(!frames){drawFallback(ctx,x,y,time,moving,direction,phase);return;}
  const row=rows[direction]??0;
