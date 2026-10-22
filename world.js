@@ -78,15 +78,23 @@ function inspectObject(o){if(fieldMenu||!o||$('#modal').open||$('#notebook').ope
 function centerObject(){const r=renderer.domElement.getBoundingClientRect();return hit({clientX:r.left+r.width/2,clientY:r.top+r.height/2})}
 function lookBy(dx,dy){player.yaw-=dx*.002*(prefs.sensitivity/100);player.pitch=Math.max(-1.15,Math.min(1.15,player.pitch-dy*.002*(prefs.sensitivity/100)));forceRender=true;}
 function canLook(){return firstPerson&&!fieldMenu&&!$('#modal').open&&!$('#notebook').open&&!$('#game').hidden;}
-let lockPending=false;
+let lockPending=false,lockFailure='';
 async function startFpsLook(){
  if(!firstPerson||!desktopPointer()||!canLook()||lockPending||document.pointerLockElement===renderer.domElement)return;
- lockPending=true;pointerLockUnavailable=false;
+ lockPending=true;pointerLockUnavailable=false;lockFailure='';lookHelp();
+ let cleanup=()=>{};
  try{
-  if(!renderer.domElement.requestPointerLock)throw Error('Pointer Lock unsupported');
-  await renderer.domElement.requestPointerLock();
- }catch{pointerLockUnavailable=true}
- finally{lockPending=false;lookHelp()}
+  if(!renderer.domElement.requestPointerLock)throw Error('이 브라우저는 마우스 고정을 지원하지 않습니다.');
+  await new Promise((resolve,reject)=>{
+   const changed=()=>{if(document.pointerLockElement===renderer.domElement)resolve()};
+   const failed=()=>reject(Error('브라우저가 마우스 고정 요청을 거부했습니다.'));
+   const timer=setTimeout(()=>reject(Error('마우스 고정 요청에 응답이 없습니다.')),3500);
+   cleanup=()=>{clearTimeout(timer);document.removeEventListener('pointerlockchange',changed);document.removeEventListener('pointerlockerror',failed)};
+   document.addEventListener('pointerlockchange',changed);document.addEventListener('pointerlockerror',failed);
+   try{const result=renderer.domElement.requestPointerLock();result?.catch?.(reject)}catch(error){reject(error)}
+  });
+ }catch(error){pointerLockUnavailable=true;lockFailure=error.name==='SecurityError'?'이 화면의 보안 설정이 마우스 고정을 차단했습니다.':error.name==='NotAllowedError'?'브라우저가 마우스 고정을 허용하지 않았습니다.':error.message||'마우스 고정을 시작하지 못했습니다.'}
+ finally{cleanup();lockPending=false;lookHelp()}
 }
 function lookHelp(){
  const locked=document.pointerLockElement===renderer.domElement;
@@ -94,9 +102,10 @@ function lookHelp(){
  $('#game').classList.toggle('fps-locked',firstPerson&&locked);
  if(gate){
   gate.hidden=!firstPerson||!desktopPointer()||locked||fieldMenu||$('#modal').open||$('#notebook').open;
+  $('#fps-start').disabled=lockPending;$('#fps-start').textContent=lockPending?'마우스 연결 중…':pointerLockUnavailable?'마우스 고정 다시 시도':'FPS 시선 시작';
   $('#fps-lock-title').textContent=pointerLockUnavailable?'이 화면에서 FPS 마우스 고정을 사용할 수 없습니다':'FPS 시선 조작';
-  $('#fps-lock-description').textContent=pointerLockUnavailable?'내장 브라우저가 마우스 고정을 제한할 수 있습니다. 새 탭에서 열어 주세요. 드래그 방식으로 바꾸지 않습니다.':'시작하면 커서가 사라지고 마우스 이동량에 따라 시선이 회전합니다. Esc를 누르면 해제됩니다.';
-  $('#fps-external').hidden=!pointerLockUnavailable;$('#fps-back').hidden=!pointerLockUnavailable;
+  $('#fps-lock-description').textContent=pointerLockUnavailable?lockFailure+' 이 대화창 안의 새 탭도 같은 제한을 받을 수 있습니다. 아래 주소를 복사해 Chrome 또는 Edge의 주소창에 직접 붙여 넣어 주세요.':'시작하면 커서가 사라지고 마우스 이동량에 따라 시선이 회전합니다. Esc를 누르면 해제됩니다.';
+  $('#fps-external').hidden=!pointerLockUnavailable;$('#fps-address').hidden=!pointerLockUnavailable;$('#fps-back').hidden=!pointerLockUnavailable;
  }
  $('.fp-instructions').textContent=!desktopPointer()?'방향 버튼: 이동 · 화면 드래그: 시선 · 조사 버튼':locked?'마우스: 시선 · WASD: 이동 · E/클릭: 조사 · N: 수첩 · I: 메뉴 · Esc: 해제':'FPS 시선 일시 정지 · 시작 버튼으로 재개';
  renderer.domElement.style.cursor=locked?'none':'default';
@@ -192,7 +201,7 @@ window.addEventListener('keydown',e=>{
 });
 
 const lockGate=document.createElement('div');lockGate.id='fps-lock-gate';lockGate.hidden=true;
-lockGate.innerHTML='<div class="fps-lock-card"><h2 id="fps-lock-title">FPS 시선 조작</h2><p id="fps-lock-description"></p><button id="fps-start" class="primary">FPS 시선 시작</button><a id="fps-external" href="https://siballllllll.github.io/Crime/" target="_blank" rel="noopener" hidden>새 탭에서 게임 열기 ↗</a><label for="fps-sensitivity">마우스 감도 <output id="fps-sensitivity-value"></output></label><input id="fps-sensitivity" type="range" min="25" max="200" step="5"><button id="fps-back">연구소 지도로 돌아가기</button></div>';
+lockGate.innerHTML='<div class="fps-lock-card"><h2 id="fps-lock-title">FPS 시선 조작</h2><p id="fps-lock-description"></p><button id="fps-start" class="primary">FPS 시선 시작</button><a id="fps-external" href="https://siballllllll.github.io/Crime/" target="_blank" rel="noopener" hidden>게임 주소 열기 ↗</a><input id="fps-address" aria-label="외부 브라우저에서 열 게임 주소" readonly value="https://siballllllll.github.io/Crime/?v=fps-retry-8" hidden><label for="fps-sensitivity">마우스 감도 <output id="fps-sensitivity-value"></output></label><input id="fps-sensitivity" type="range" min="25" max="200" step="5"><button id="fps-back">연구소 지도로 돌아가기</button></div>';
 $('#viewport').appendChild(lockGate);
 $('#fps-start').onclick=startFpsLook;$('#fps-back').onclick=showHub;
 $('#fps-sensitivity').value=prefs.sensitivity;$('#fps-sensitivity-value').textContent=prefs.sensitivity+'%';

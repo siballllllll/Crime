@@ -78,3 +78,6 @@ body.immersive:has(#notebook){overflow:hidden}
 @media(pointer:coarse){.first-person:not(.fps-locked) .fp-reticle{visibility:visible}}
 .field-bar .field-exit-hint{font-size:14px;color:#e2e9e6;background:#10232ed9;border:1px solid #617b85;border-radius:5px;padding:10px 12px}
 @media(max-width:700px){.field-bar .field-exit-hint{font-size:11px;padding:8px}.field-bar>span:not(.field-exit-hint){display:none}}
+#fps-lock-gate{pointer-events:auto;z-index:8;overflow-y:auto}
+#fps-start:disabled{cursor:wait;opacity:.65}
+#fps-address{font-size:13px;padding:10px;background:#0b1b24;color:#e9f0ef;border:1px solid #8b9da5;border-radius:5px;user-select:all}
