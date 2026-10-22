@@ -33,8 +33,8 @@ const info=itemInfo[s.selected];$('#item-detail').innerHTML=info?`${illustration
 document.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{s.selected=s.selected===b.dataset.item?null:b.dataset.item;save();note(s.selected?itemInfo[s.selected][1]:'도구 선택을 해제했습니다.')});
 }
 function objective(){$('#goal-counter').textContent='CASE 001 / 현장 수사';$('#goal-title').textContent='시료는 누가 바꿨을까?';$('#objective-text').textContent='현장의 시료와 기록을 검사하고, 사전 수사 자료와 대조해 범인과 사건 경위를 밝히세요.';$('#goal-list').innerHTML='';$('#locate-goal').textContent='확보한 기록 모아보기 ↗';}
-function modal(title,body,actions=[]){releaseControls();const utility=/화면 설정|수사 시작|물건을 관찰/.test(title);const artId=/찰칵|열린 서랍/.test(title)?'drawerOpen':/보관함이 열렸다/.test(title)?'cabinetOpen':/증폭이 완료/.test(title)?'amp':/재조합/.test(title)?'recomb':activeInspect;const picture=`<div class="inspect-visual">${illustration(artId)}<span>${{amp:'PCR 증폭 DNA',drawerOpen:'서랍 내부 · 열쇠와 직원 카드',cabinetOpen:'보관함 내부 · B-12 시료',notebook:'실험 노트',drawer:'현장 수사 장비함',cabinet:'시료 보관함',culture:'조직 배양병',pcr:'PCR 증폭 장비',sequencer:'염기서열 분석기',terminal:'출입 단말',recomb:'재조합 DNA'}[artId]||'조사 대상'}</span></div>`;body=body.replace(/<div class="inspect-visual">[\s\S]*?<\/div>/g,'');$('#modal-content').innerHTML=`<span class="zoom-label">${utility?'BIO CASEFILES / 현장 안내':'OBJECT INSPECTION / 확대 조사'}</span><h2>${title}</h2>${utility?'':picture}<div class="inspection-copy">${body}</div><div class="item-actions">${actions.map((a,i)=>`<button id="action-${i}" class="${i===0?'primary':''}">${a[0]}</button>`).join('')}</div>`;if(!$('#modal').open)$('#modal').showModal();actions.forEach((a,i)=>$('#action-'+i).onclick=a[1]);}
-function openNotes(tab='suspects'){releaseControls();if(!$('#notebook').open)$('#notebook').showModal();window.dispatchEvent(new CustomEvent('open-notebook',{detail:tab}))}
+function modal(title,body,actions=[]){releaseControls();const utility=/화면 설정|수사 시작|물건을 관찰/.test(title);const artId=/찰칵|열린 서랍/.test(title)?'drawerOpen':/보관함이 열렸다/.test(title)?'cabinetOpen':/증폭이 완료/.test(title)?'amp':/재조합/.test(title)?'recomb':activeInspect;const picture=`<div class="inspect-visual">${illustration(artId)}<span>${{amp:'PCR 증폭 DNA',drawerOpen:'서랍 내부 · 열쇠와 직원 카드',cabinetOpen:'보관함 내부 · B-12 시료',notebook:'실험 노트',drawer:'현장 수사 장비함',cabinet:'시료 보관함',culture:'조직 배양병',pcr:'PCR 증폭 장비',sequencer:'염기서열 분석기',terminal:'출입 단말',recomb:'재조합 DNA'}[artId]||'조사 대상'}</span></div>`;body=body.replace(/<div class="inspect-visual">[\s\S]*?<\/div>/g,'');$('#modal-content').innerHTML=`<span class="zoom-label">${utility?'BIO CASEFILES / 현장 안내':'OBJECT INSPECTION / 확대 조사'}</span><h2>${title}</h2>${utility?'':picture}<div class="inspection-copy">${body}</div><div class="item-actions">${actions.map((a,i)=>`<button id="action-${i}" class="${i===0?'primary':''}">${a[0]}</button>`).join('')}</div>`;if(!$('#modal').open)$('#modal').showModal();lookHelp();actions.forEach((a,i)=>$('#action-'+i).onclick=a[1]);}
+function openNotes(tab='suspects'){releaseControls();if(!$('#notebook').open)$('#notebook').showModal();lookHelp();window.dispatchEvent(new CustomEvent('open-notebook',{detail:tab}))}
 $('#open-notes').onclick=()=>openNotes('report');$('#open-dossiers').onclick=()=>openNotes('suspects');$('#open-board').onclick=()=>openNotes('board');$('#return-room').onclick=()=>{$('#notebook').close();};$('#world-help').onclick=()=>modal('물건을 관찰하고, 도구를 사용하세요.','<p>방 안의 물건을 누르면 카메라가 가까이 이동합니다. 노트·배양병·장비를 조사하세요. 좌우 화살표로 방을 다른 각도에서 볼 수 있습니다.</p><p>획득한 도구는 아래 도구함에서 선택한 뒤 대상 물건을 누르면 사용합니다. 장비는 과학적 원리에 맞게 조작해야 작동합니다. 수사 노트에는 용어 사전·용의자 진술·보고서가 있습니다.</p><p>진행은 브라우저에 저장됩니다. 교실에서의 45분 난이도는 아직 검증 전입니다.</p>');
 const scene=new T.Scene();scene.background=new T.Color('#101e25');scene.fog=new T.Fog('#101e25',20,42);
 const camera=new T.PerspectiveCamera(39,1,.1,70);camera.position.set(11,10,13);const renderer=new T.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=prefs.brightness/100;$('#viewport').appendChild(renderer.domElement);
@@ -102,6 +102,7 @@ function lookHelp(){
  $('#game').classList.toggle('fps-locked',firstPerson&&locked);
  if(gate){
   gate.hidden=!firstPerson||!desktopPointer()||locked||fieldMenu||$('#modal').open||$('#notebook').open;
+  if(gate.showPopover){if(gate.hidden){if(gate.matches(':popover-open'))gate.hidePopover()}else if(!gate.matches(':popover-open'))gate.showPopover()}
   $('#fps-start').disabled=lockPending;$('#fps-start').textContent=lockPending?'마우스 연결 중…':pointerLockUnavailable?'마우스 고정 다시 시도':'FPS 시선 시작';
   $('#fps-lock-title').textContent=pointerLockUnavailable?'이 화면에서 FPS 마우스 고정을 사용할 수 없습니다':'FPS 시선 조작';
   $('#fps-lock-description').textContent=pointerLockUnavailable?lockFailure+' 이 대화창 안의 새 탭도 같은 제한을 받을 수 있습니다. 아래 주소를 복사해 Chrome 또는 Edge의 주소창에 직접 붙여 넣어 주세요.':'시작하면 커서가 사라지고 마우스 이동량에 따라 시선이 회전합니다. Esc를 누르면 해제됩니다.';
@@ -200,9 +201,17 @@ window.addEventListener('keydown',e=>{
  if($('#notebook').open){$('#notebook').close();startFpsLook()}else openNotes('board');
 });
 
-const lockGate=document.createElement('div');lockGate.id='fps-lock-gate';lockGate.hidden=true;
-lockGate.innerHTML='<div class="fps-lock-card"><h2 id="fps-lock-title">FPS 시선 조작</h2><p id="fps-lock-description"></p><button id="fps-start" class="primary">FPS 시선 시작</button><a id="fps-external" href="https://siballllllll.github.io/Crime/" target="_blank" rel="noopener" hidden>게임 주소 열기 ↗</a><input id="fps-address" aria-label="외부 브라우저에서 열 게임 주소" readonly value="https://siballllllll.github.io/Crime/?v=fps-retry-8" hidden><label for="fps-sensitivity">마우스 감도 <output id="fps-sensitivity-value"></output></label><input id="fps-sensitivity" type="range" min="25" max="200" step="5"><button id="fps-back">연구소 지도로 돌아가기</button></div>';
-$('#viewport').appendChild(lockGate);
-$('#fps-start').onclick=startFpsLook;$('#fps-back').onclick=showHub;
+const lockGate=document.createElement('div');lockGate.id='fps-lock-gate';lockGate.hidden=true;lockGate.setAttribute('popover','manual');
+lockGate.innerHTML='<div class="fps-lock-card"><small class="fps-control-version">시선 제어 v9</small><h2 id="fps-lock-title">FPS 시선 조작</h2><p id="fps-click-status" role="status" aria-live="polite"></p><p id="fps-lock-description"></p><button id="fps-start" class="primary">FPS 시선 시작</button><a id="fps-external" href="https://siballllllll.github.io/Crime/" target="_blank" rel="noopener" hidden>게임 주소 열기 ↗</a><input id="fps-address" aria-label="외부 브라우저에서 열 게임 주소" readonly value="https://siballllllll.github.io/Crime/?v=fps-retry-8" hidden><label for="fps-sensitivity">마우스 감도 <output id="fps-sensitivity-value"></output></label><input id="fps-sensitivity" type="range" min="25" max="200" step="5"><button id="fps-back">연구소 지도로 돌아가기</button></div>';
+document.body.appendChild(lockGate);
+$('#fps-start').onclick=()=>{
+ $('#fps-click-status').textContent='시작 버튼 입력을 받았습니다.';
+ if(!firstPerson){$('#fps-click-status').textContent='현장 입장이 해제되었습니다. 복도로 돌아가 다시 입장해 주세요.';return}
+ if(!desktopPointer()){$('#fps-click-status').textContent='이 브라우저는 마우스 대신 터치 기기로 인식되고 있습니다.';return}
+ if($('#modal').open||$('#notebook').open){$('#fps-click-status').textContent='열려 있는 조사 창을 먼저 닫아 주세요.';return}
+ if(fieldMenu)closeFieldMenu();
+ if(lockPending){$('#fps-click-status').textContent='마우스 연결 응답을 기다리고 있습니다.';return}
+ startFpsLook();
+};$('#fps-back').onclick=showHub;
 $('#fps-sensitivity').value=prefs.sensitivity;$('#fps-sensitivity-value').textContent=prefs.sensitivity+'%';
 $('#fps-sensitivity').oninput=e=>{prefs.sensitivity=Number(e.target.value);$('#fps-sensitivity-value').textContent=prefs.sensitivity+'%';localStorage.setItem('bio-display-v1',JSON.stringify(prefs))};

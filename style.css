@@ -81,3 +81,10 @@ body.immersive:has(#notebook){overflow:hidden}
 #fps-lock-gate{pointer-events:auto;z-index:8;overflow-y:auto}
 #fps-start:disabled{cursor:wait;opacity:.65}
 #fps-address{font-size:13px;padding:10px;background:#0b1b24;color:#e9f0ef;border:1px solid #8b9da5;border-radius:5px;user-select:all}
+/* The start panel lives in the browser top layer, above canvas and HUD layers. */
+#fps-lock-gate{position:fixed;inset:0;margin:0;width:100vw;height:100dvh;max-width:none;max-height:none;border:0;z-index:10000;color:var(--text)}
+#fps-lock-gate::backdrop{background:transparent;pointer-events:none}
+#fps-lock-gate .fps-lock-card,#fps-lock-gate button{pointer-events:auto}
+.fps-control-version{display:block;color:#c6d6de;font-size:12px;margin-bottom:10px}
+#fps-click-status:empty{display:none}
+#fps-click-status{padding:8px 10px;background:#244237;border:1px solid #8aa98c;border-radius:5px;color:#edf4d8}
