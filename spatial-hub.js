@@ -1,12 +1,12 @@
 import {refineLaboratory} from './lab-art.js?v=1';
 import * as T from './vendor/three.module.js';
 import {drawInvestigator} from './character.js?v=4';
-import {walkable,stepPlayer,findPath} from './spatial-navigation.js';
+import {walkable,stepPlayer,findPath} from './spatial-navigation.js?v=2';
 export function createHub({enter,notes,lab,settings,observe,investigate,inventory}){
  const hub=document.createElement('section');hub.id='research-hub';hub.className='spatial-hub';
  hub.innerHTML=`<header class="hub-header"><div><span>BIO CASEFILES / EXPLORABLE LAB</span><h1>사라진 신품종</h1><p>새봄 연구소 · 배양 연구동</p></div><button id="hub-settings">화면 설정</button></header><div class="spatial-viewport"><div class="spatial-caption">쿼터뷰 수사 <span>WASD 이동 · 바닥 클릭 이동 · E 상호작용</span></div><div class="spatial-object-label" hidden></div><div class="spatial-loading">연구소를 여는 중…</div><button class="spatial-action" disabled>주변을 둘러보세요</button><div class="spatial-zoom"><button aria-label="화면 확대" data-zoom="in">＋</button><button aria-label="화면 축소" data-zoom="out">−</button></div><button class="spatial-home">입구로 돌아가기</button><div class="spatial-pad"><button data-dir="up">↑</button><button data-dir="left">←</button><button data-dir="down">↓</button><button data-dir="right">→</button></div><p class="spatial-status" role="status"></p></div><footer class="hub-footer"><div><button data-note="suspects">용의자 자료</button><button data-note="board">내 증거 보드</button><button data-note="report">수사 보고서</button><button class="spatial-inventory">도구함</button><button class="focus-room">1인칭 정밀 조사</button></div><small>문은 가까이에서 열 수 있습니다. 실내 장비와 기록은 직접 조사하세요.</small></footer>`;
  const area=hub.querySelector('.spatial-viewport'),action=hub.querySelector('.spatial-action'),status=hub.querySelector('.spatial-status');
- const renderer=new T.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;area.prepend(renderer.domElement);renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','걸어 다닐 수 있는 쿼터뷰 연구소');
+ const renderer=new T.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;area.prepend(renderer.domElement);renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','걸어 다닐 수 있는 쿼터뷰 연구소');
  const scene=new T.Scene();scene.background=new T.Color('#101c29');scene.fog=new T.Fog('#101c29',35,65);
  const camera=new T.OrthographicCamera(-10,10,8,-8,.1,80);camera.zoom=1.12;const cameraOffset=new T.Vector3(12,17,15);
  scene.add(new T.HemisphereLight('#bedee4','#253545',.8));const sun=new T.DirectionalLight('#deedff',1.7);sun.position.set(-8,10,-8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-16,right:16,top:16,bottom:-16,near:1,far:45});sun.shadow.radius=3;sun.shadow.bias=-.0004;sun.shadow.normalBias=.04;scene.add(sun);
@@ -20,16 +20,16 @@ export function createHub({enter,notes,lab,settings,observe,investigate,inventor
  function label(str,x,y,z,w=2){const cv=document.createElement('canvas');cv.width=512;cv.height=96;const ctx=cv.getContext('2d');ctx.fillStyle='#19353b';ctx.fillRect(0,0,512,96);ctx.strokeStyle='#a6b5a0';ctx.strokeRect(5,5,502,86);ctx.font='bold 36px sans-serif';ctx.fillStyle='#e0dcc2';ctx.textAlign='center';ctx.fillText(str,256,61);const tex=new T.CanvasTexture(cv);tex.colorSpace=T.SRGBColorSpace;const mesh=new T.Mesh(new T.PlaneGeometry(w,w*96/512),new T.MeshBasicMaterial({map:tex}));mesh.position.set(x,y,z);scene.add(mesh);return mesh;}
  function target(mesh,name,x,z,run,range=1.9){const item={mesh,name,x,z,run,range};mesh.traverse(o=>o.userData.target=item);targets.push(item);return item;}
  // Individually modelled tiles and walls: camera motion reveals real depth.
- box(0,-.28,0,20.6,.5,14.6,'#243c43');
- for(let x=-10;x<10;x++)for(let z=-7;z<7;z++){const color=z>0?((x+z)%2?'#63736c':'#6c7b72'):((x+z)%2?'#748b82':'#80948a');box(x+.5,-.015,z+.5,.985,.045,.985,color);}
+ box(0,-.28,0,30.6,.5,14.6,'#243c43');
+ for(let x=-15;x<15;x++)for(let z=-7;z<7;z++){const color=z>0?((x+z)%2?'#63736c':'#6c7b72'):((x+z)%2?'#748b82':'#80948a');box(x+.5,-.015,z+.5,.985,.045,.985,color);}
  for(const x of [-9.8,9.8]){box(x,1.4,-3.5,.28,2.8,7,'#647d73');block(x,-3.5,.28,7);box(x,2.83,-3.5,.4,.13,7,'#a5b59b');}
- box(0,1.55,-6.9,20,3.1,.25,'#718c7b');block(0,-6.9,20,.25);box(0,.18,-6.69,20,.28,.12,'#3f615a');
+ box(0,1.55,-6.9,30,3.1,.25,'#718c7b');block(0,-6.9,30,.25);box(0,.18,-6.69,30,.28,.12,'#3f615a');
  for(let x=-9;x<10;x+=2){box(x,1.5,-6.72,.09,2.8,.1,'#849b86');}
  // Front cutaway wall with an actual hinged door between the two sections.
  for(const [x,w] of [[-8,4],[-1,6],[6.5,7]]){box(x,.85,0,w,1.7,.3,'#4e7068');box(x,1.73,0,w+.08,.12,.4,'#b2bda0');block(x,0,w,.3);}
  const hinge=new T.Group();hinge.position.set(-6,0,0);scene.add(hinge);box(1,1,0,2,2,.13,'#385b57',hinge);box(1,1.5,-.08,1.5,.6,.03,'#73998f',hinge);box(1,.68,-.08,1.6,.55,.03,'#557368',hinge);box(1.77,1,.13,.09,.12,.14,'#d5b878',hinge);
  const doorBlock={x:-5,z:0,w:2,d:.24};
- target(hinge,'배양실 문',-5,0,()=>{if(doorOpen&&Math.abs(player.x+5)<1.4&&Math.abs(player.z)<.65){say('문에서 조금 떨어진 뒤 닫아 주세요.');return;}doorOpen=!doorOpen;route=[];say(doorOpen?'문을 열었습니다. 배양실 안으로 들어갈 수 있습니다.':'문을 닫았습니다.');},2.4);
+ target(hinge,'배양실 문',-5,0,()=>{if(doorOpen&&Math.abs(player.x+10)<1.4&&Math.abs(player.z)<.65){say('문에서 조금 떨어진 뒤 닫아 주세요.');return;}doorOpen=!doorOpen;route=[];say(doorOpen?'문을 열었습니다. 배양실 안으로 들어갈 수 있습니다.':'문을 닫았습니다.');},2.4);
  label('배양실 02',-5,2.9,.05,2.1);box(-6.13,1.38,0,.18,2.76,.3,'#b1b99a');box(-3.88,1.38,0,.18,2.76,.3,'#b1b99a');box(-5,2.76,0,2.4,.16,.3,'#b1b99a');
  // A second, open passage connects the analysis and office benches.
  label('분석실 / 수사 기록',2.5,2.65,.03,3.3);
@@ -41,8 +41,8 @@ export function createHub({enter,notes,lab,settings,observe,investigate,inventor
  const seq=bench(3.4,-4.4,3);box(0,1.43,0,1.9,.65,.85,'#a7bdb0',seq);box(.15,1.52,.44,1.2,.32,.025,'#244f5c',seq);target(seq,'염기서열 분석기',3.4,-4.4,()=>investigate('sequencer'),2.2);
  const archive=new T.Group();scene.add(archive);archive.position.set(8.4,0,-4.9);box(0,1.35,0,1.7,2.7,.9,'#536e63',archive);for(let y=.35;y<2.7;y+=.62){box(0,y,0,1.6,.08,1,'#abb79d',archive);for(let x=-.65;x<.8;x+=.18)box(x,y+.24,0,.13,.4,.6,x>0?'#9b7d5d':'#597c73',archive);}block(8.4,-4.9,1.7,.9);target(archive,'용의자 수사 자료',8.4,-4.9,()=>notes('suspects'),2);
  const sample=new T.Group();sample.position.set(-9,0,-4.8);scene.add(sample);box(0,1.35,0,1,2.7,1,'#b5c4ac',sample);box(0,1.65,.52,.8,1.5,.04,'#3f6b65',sample);box(.3,1.35,.57,.05,.45,.08,'#d8d1a9',sample);block(-9,-4.8,1,1);target(sample,'시료 보관함',-9,-4.8,()=>investigate('cabinet'));
- const kit=bench(6.6,-1.5,2);box(0,1.28,0,1,.35,.65,'#4f6865',kit);box(0,1.47,0,.45,.06,.2,'#c1b783',kit);target(kit,'수사 장비함',6.6,-1.5,()=>investigate('drawer'));
- const terminal=bench(8.2,4.5,2);box(0,1.5,0,1,.75,.15,'#304b54',terminal);box(0,1.5,.09,.83,.56,.02,'#6caaa1',terminal);target(terminal,'출입 기록 단말',8.2,4.5,()=>investigate('terminal'));
+ const kit=bench(-3.5,-1.5,2);box(0,1.28,0,1,.35,.65,'#4f6865',kit);box(0,1.47,0,.45,.06,.2,'#c1b783',kit);target(kit,'수사 장비함',-3.5,-1.5,()=>investigate('drawer'));
+ const terminal=bench(6,-5.6,2);box(0,1.5,0,1,.75,.15,'#304b54',terminal);box(0,1.5,.09,.83,.56,.02,'#6caaa1',terminal);target(terminal,'출입 기록 단말',6,-5.6,()=>investigate('terminal'));
  // Windows, pipes, fittings and lamps add physical depth to the room.
  for(const x of [-6,-1,4]){box(x,2,-6.72,3.2,1.5,.1,'#284a59');for(let a=-1.4;a<=1.4;a+=.7)box(x+a,2,-6.61,.04,1.5,.05,'#adc2ad');box(x,2,-6.6,3.2,.04,.06,'#a2b8a5');}
  box(0,3,-6.5,19,.06,.08,'#a39c7e');for(const x of [-8.5,1.8,8.5])box(x,1.9,-6.5,.06,2.2,.08,'#a39c7e');
@@ -53,44 +53,80 @@ export function createHub({enter,notes,lab,settings,observe,investigate,inventor
  const seat=new T.Group();seat.position.set(-2,0,4.7);scene.add(seat);box(0,.5,0,2.5,.18,.8,'#806e52',seat);box(0,1,.32,2.5,.8,.12,'#8c795a',seat);for(const x of [-1,1])box(x,.24,0,.13,.5,.6,'#35474b',seat);block(-2,4.7,2.5,.9);
  const lampStand=new T.Group();lampStand.position.set(2,0,4.8);scene.add(lampStand);cylinder(0,.9,0,.04,1.8,'#9e9772',lampStand);cylinder(0,.08,0,.3,.16,'#405654',lampStand);const shade=new T.Mesh(new T.ConeGeometry(.45,.6,12,1,true),mat('#d4b77b'));shade.position.y=1.9;lampStand.add(shade);const warm=new T.PointLight('#ffcc7b',9,6,2);warm.position.set(2,1.65,4.8);scene.add(warm);block(2,4.8,.6,.6);target(lampStand,'복도 조명 켜기 / 끄기',2,4.8,()=>{warm.visible=!warm.visible;say(warm.visible?'복도 조명을 켰습니다.':'복도 조명을 껐습니다.');});
  // Physical desk clutter, vent blades, instruments and a blue status display.
- for(const [x,z] of [[-7.5,-4.3],[-.1,-4.4],[4.2,-4.4],[6.6,-1.5]]){for(let j=0;j<3;j++){const paper=box(x+j*.07,1.16+j*.014,z+.25,.42,.012,.31,'#e2d5af');paper.rotation.y=j*.15;box(x+j*.07,1.18+j*.014,z+.25,.27,.005,.018,'#728779');}cylinder(x+.48,1.29,z+.2,.09,.26,'#677f75');for(let k=0;k<3;k++)box(x+.45+k*.03,1.47,z+.2,.018,.22,.018,'#b79d72');}
+ for(const [x,z] of [[-7.5,-4.3],[-.1,-4.4],[4.2,-4.4],[-3.5,-1.5]]){for(let j=0;j<3;j++){const paper=box(x+j*.07,1.16+j*.014,z+.25,.42,.012,.31,'#e2d5af');paper.rotation.y=j*.15;box(x+j*.07,1.18+j*.014,z+.25,.27,.005,.018,'#728779');}cylinder(x+.48,1.29,z+.2,.09,.26,'#677f75');for(let k=0;k<3;k++)box(x+.45+k*.03,1.47,z+.2,.018,.22,.018,'#b79d72');}
  for(const x of [-7.2,-5.7,-.8,3.4]){for(let j=0;j<3;j++){box(x+j*.12,1.23,-4.58,.07,.3,.07,'#8dbdaf');box(x+j*.12,1.4,-4.58,.08,.04,.08,'#d2c8a4');}box(x+.12,1.13,-4.58,.5,.06,.22,'#617c73');}
  for(const x of [-6,-1,4]){label('SAEBOM / RESEARCH',x,2.98,-6.56,1.7);}
  const fan=new T.Group();fan.position.set(7,2.5,-6.52);scene.add(fan);box(0,0,0,1.1,.8,.1,'#2b4851',fan);const rotor=new T.Group();rotor.position.z=.1;fan.add(rotor);for(let i=0;i<4;i++){const blade=box(0,.18,0,.12,.34,.04,'#8a9f95',rotor);blade.position.set(Math.sin(i*Math.PI/2)*.18,Math.cos(i*Math.PI/2)*.18,0);blade.rotation.z=-i*Math.PI/2;}cylinder(0,0,0,.08,.08,'#afbaa1',rotor);
  const displayCanvas=document.createElement('canvas');displayCanvas.width=256;displayCanvas.height=128;const dc=displayCanvas.getContext('2d');const displayTex=new T.CanvasTexture(displayCanvas);displayTex.colorSpace=T.SRGBColorSpace;const display=new T.Mesh(new T.PlaneGeometry(1.15,.4),new T.MeshBasicMaterial({map:displayTex}));display.position.set(3.55,1.52,-3.94);scene.add(display);
  const rug=box(-2,.028,4.5,3.4,.015,2.2,'#485a57');
  refineLaboratory({scene,renderer,box,cylinder,culture,pcr,seq,sample,notebook,plants});
- const player={x:-5,z:3};let route=[],keys=new Set(),near=null,last=0,phase=0,direction='down';const focus=new T.Vector3(-2,0,1);
+ // Three separate rooms flank one continuous corridor.
+ const shift=x=>x< -3? -5:x>5?5:0;
+ const oldFront=scene.children.filter(o=>o.isMesh&&Math.abs(o.position.z)<.24&&o.position.y>.1&&o!==hinge);
+ for(const o of oldFront)scene.remove(o);
+ // Keep the new continuous floor and long rear wall fixed; move individual props.
+ for(const o of scene.children){if(o===hinge){o.position.x-=5;continue;}if(o.isLight)continue;if(o.isMesh&&o.position.y<.1)continue;const w=o.geometry?.parameters?.width;if(w>=19)continue;o.position.x+=shift(o.position.x);}
+ for(const b of obstacles){if(b.z===0&&b.d===.3)continue;if(b.w<19)b.x+=shift(b.x);}
+ for(let i=obstacles.length-1;i>=0;i--)if(obstacles[i].z===0&&obstacles[i].d===.3)obstacles.splice(i,1);
+ for(const t of targets)t.x+=shift(t.x);
+ doorBlock.x=-10;
+ for(const [x,w,color] of [[-13,4,'#374e60'],[-5,8,'#567a79'],[5,8,'#677465'],[13,4,'#766149']]){box(x,.65,0,w,1.3,.3,color);box(x,1.33,0,w,.08,.38,'#b7b79b');block(x,0,w,.3);}
+ for(const x of [-5,5]){box(x,1.25,-3.5,.25,2.5,7,x<0?'#415e69':'#7a7462');box(x,2.53,-3.5,.32,.08,7,'#b8b69d');block(x,-3.5,.25,7);}
+ // Flooring makes each room recognizable even when its sign is outside the view.
+ for(const o of scene.children){if(!o.isMesh||o.position.y>0||o.position.y<-.1)continue;const x=o.position.x,z=o.position.z;if(z>=0)continue;const color=x< -5?'#475d70':x>5?'#7a6146':'#adc2bd';o.material=new T.MeshStandardMaterial({map:surface(color),roughness:x>5?.75:.48});}
+ // Room-specific light pools: cold scene, clean analysis, warm records office.
+ lamps.forEach((l,i)=>{l.position.x=[-10,0,10][i];l.color.set(['#88b8e8','#d3f9f5','#ffcc8a'][i]);l.userData.base=[4,12,8][i];});
+ label('01  범죄현장',-10,3,.1,2.7);label('02  분석실',0,2.75,.1,2.6);label('03  수사기록실',10,2.75,.1,2.8);
+ for(const x of [-10,0,10]){for(const dx of [-1.12,1.12])box(x+dx,1.25,0,.14,2.5,.3,x===0?'#c6d8cd':'#9b8261');box(x,2.53,0,2.4,.13,.32,x===0?'#c6d8cd':'#9b8261');}
+ // Evidence markers stay inside the crime scene; they identify preserved objects, not answers.
+ for(const [x,z,n] of [[-10.8,-3.35,'A'],[-12.7,-1.3,'B']]){const marker=box(x,.15,z,.25,.3,.12,'#ddbf65');label(n,x,.28,z+.07,.17);}
+ for(const x of [-12.8,-7.3]){cylinder(x,.55,.45,.035,1.1,'#34444f');box(x,.95,.45,.65,.11,.025,'#c6ab61');}
+ // A proper reading desk and case board are available only inside the records room.
+ const recordsDesk=bench(9,-3,2.8,1.25);box(0,1.17,0,1.1,.04,.65,'#4f6151',recordsDesk);for(let i=0;i<3;i++)box(-.7+i*.16,1.23+i*.025,.15,.42,.025,.32,'#d7ceae',recordsDesk);
+ target(recordsDesk,'수사기록 정리 · 증거 보드',9,-3,()=>notes('board'),2.2);
+ const reportDesk=bench(12.4,-2,1.7,1.1);box(0,1.17,0,.6,.05,.5,'#d8cda7',reportDesk);target(reportDesk,'최종 수사 보고서',12.4,-2,()=>notes('report'));
+ for(const desk of [recordsDesk,reportDesk])for(const piece of desk.children){if(piece.position.y<=1.13&&piece.isMesh)piece.material=mat(piece.position.y>1?'#a48b62':'#6b5139');}
+ const officeLamp=new T.PointLight('#ffbe73',7,5,2);officeLamp.position.set(9,2,-3);scene.add(officeLamp);cylinder(9,1.43,-3,.03,.6,'#a5885c');const officeShade=new T.Mesh(new T.ConeGeometry(.24,.28,16),mat('#bd9a61'));officeShade.position.set(9,1.8,-3);scene.add(officeShade);
+ for(let x=5.3;x<14.7;x+=.6){box(x,1,-6.7,.56,1.9,.1,'#6c5944');box(x,1.96,-6.64,.58,.04,.12,'#b49b6e');}
+ const caseBoard=new T.Group();caseBoard.position.set(8,2.2,-6.49);scene.add(caseBoard);box(0,0,0,2.5,1.2,.08,'#665137',caseBoard);box(0,0,.05,2.35,1.06,.02,'#a18d65',caseBoard);for(let i=0;i<6;i++){const px=(i%3-1)*.7,py=Math.floor(i/3)*.45-.23;box(px,py,.075,.47,.34,.012,'#e2d5af',caseBoard);for(let j=0;j<3;j++)box(px,py-.08+j*.06,.084,.31,.014,.006,'#7e816b',caseBoard);}target(caseBoard,'사건 자료 게시판',8,-6.49,()=>notes('board'),2);
+ for(let x=5.4;x<14.8;x+=.45)box(x,.036,-3.4,.015,.008,6.6,'#574634');
+ // The analysis room uses clean white panels and cool task lights.
+ for(const x of [-4.4,4.4]){box(x,1.5,-6.55,.5,2.7,.12,'#d0dfd4');}
+ label('현장 보존 구역',-12.3,2.25,-6.56,2);label('시료 검사 / ANALYSIS',0,2.98,-6.55,2.7);label('CASE RECORDS',10,2.95,-6.54,2.4);
+ const zoneBar=document.createElement('nav');zoneBar.className='room-directory';zoneBar.setAttribute('aria-label','연구소 위치');for(const [name,x] of [['범죄현장',-10],['분석실',0],['수사기록실',10]]){const b=document.createElement('button');b.textContent=name;b.dataset.roomX=x;b.onclick=()=>{stop();route=findPath(player,{x,z:1.7},solids());destinationName=name;say(name+' 입구로 이동합니다.');};zoneBar.appendChild(b);}area.appendChild(zoneBar);
+ const player={x:-10,z:3};let route=[],destinationName='',keys=new Set(),near=null,last=0,phase=0,direction='down';const focus=new T.Vector3(-8,0,1);
  const actorCanvas=document.createElement('canvas');actorCanvas.width=128;actorCanvas.height=128;const actorContext=actorCanvas.getContext('2d');const actorTexture=new T.CanvasTexture(actorCanvas);actorTexture.colorSpace=T.SRGBColorSpace;actorTexture.magFilter=T.NearestFilter;const actor=new T.Mesh(new T.PlaneGeometry(1.9,1.9),new T.MeshBasicMaterial({map:actorTexture,transparent:true,alphaTest:.12,side:T.DoubleSide,depthWrite:true}));scene.add(actor);
  const shadow=new T.Mesh(new T.CircleGeometry(.33,24),new T.MeshBasicMaterial({color:'#152a31',transparent:true,opacity:.28,depthWrite:false}));shadow.rotation.x=-Math.PI/2;scene.add(shadow);
  const marker=new T.Mesh(new T.RingGeometry(.31,.35,32),new T.MeshBasicMaterial({color:'#e5ca8a',transparent:true,opacity:.7,side:T.DoubleSide,depthWrite:false}));marker.rotation.x=-Math.PI/2;marker.visible=false;scene.add(marker);
  const objectLabel=hub.querySelector('.spatial-object-label');const labelPoint=new T.Vector3();
  const ray=new T.Raycaster(),mouse=new T.Vector2(),ground=new T.Plane(new T.Vector3(0,1,0),0);const active=()=>hub.isConnected&&hub.closest('#game').classList.contains('hub-mode')&&!hub.closest('#game').hidden&&!document.querySelector('#modal').open;
- const solids=()=>doorAngle<1.35?[...obstacles,doorBlock]:[...obstacles,{x:-6,z:1,w:.16,d:2}];
+ const solids=()=>doorAngle<1.35?[...obstacles,doorBlock]:[...obstacles,{x:-11,z:1,w:.16,d:2}];
  function say(text){status.textContent=text;}
- function stop(){keys.clear();route=[];}
+ function stop(){keys.clear();route=[];destinationName='';}
+ const sameRoom=t=>!(player.z<-.3&&t.z<-.3&&((player.x< -5)!==(t.x< -5)||(player.x>5)!==(t.x>5)));
  function interact(){if(!near)return;stop();near.run();}
  action.onclick=interact;
  function go(item){const candidates=[];for(let a=0;a<Math.PI*2;a+=Math.PI/8){const p={x:item.x+Math.cos(a)*1.35,z:item.z+Math.sin(a)*1.35};if(walkable(p.x,p.z,solids(),.3))candidates.push(p);}candidates.sort((a,b)=>Math.hypot(a.x-player.x,a.z-player.z)-Math.hypot(b.x-player.x,b.z-player.z));if(candidates.length)route=findPath(player,candidates[0],solids());say('가까이 이동한 뒤 E 또는 조사 버튼을 누르세요.');}
- renderer.domElement.addEventListener('pointerdown',e=>{if(!active())return;renderer.domElement.focus();const bounds=renderer.domElement.getBoundingClientRect();mouse.set((e.clientX-bounds.left)/bounds.width*2-1,1-(e.clientY-bounds.top)/bounds.height*2);ray.setFromCamera(mouse,camera);const hit=ray.intersectObjects(scene.children,true).find(h=>h.object!==actor&&h.object!==shadow&&h.object!==marker);const item=hit?.object.userData.target;if(item){if(Math.hypot(player.x-item.x,player.z-item.z)<item.range){stop();item.run();}else go(item);return;}const p=new T.Vector3();if(ray.ray.intersectPlane(ground,p))route=findPath(player,p,solids());});
+ renderer.domElement.addEventListener('pointerdown',e=>{if(!active())return;renderer.domElement.focus();const bounds=renderer.domElement.getBoundingClientRect();mouse.set((e.clientX-bounds.left)/bounds.width*2-1,1-(e.clientY-bounds.top)/bounds.height*2);ray.setFromCamera(mouse,camera);const hit=ray.intersectObjects(scene.children,true).find(h=>h.object!==actor&&h.object!==shadow&&h.object!==marker);const item=hit?.object.userData.target;if(item){if(sameRoom(item)&&Math.hypot(player.x-item.x,player.z-item.z)<item.range){stop();item.run();}else go(item);return;}const p=new T.Vector3();if(ray.ray.intersectPlane(ground,p))route=findPath(player,p,solids());});
  const map={KeyW:'up',ArrowUp:'up',KeyS:'down',ArrowDown:'down',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
  window.addEventListener('keydown',e=>{if(!active()||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(map[e.code]){e.preventDefault();keys.add(map[e.code]);route=[];}if(e.code==='KeyE'&&!e.repeat){e.preventDefault();interact();}});window.addEventListener('keyup',e=>keys.delete(map[e.code]));window.addEventListener('blur',stop);
  for(const b of hub.querySelectorAll('[data-dir]')){b.onpointerdown=e=>{e.preventDefault();keys.add(b.dataset.dir);route=[];b.setPointerCapture(e.pointerId);};for(const event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>keys.delete(b.dataset.dir));}
- hub.querySelector('.spatial-home').onclick=()=>{stop();player.x=-5;player.z=3;say('입구로 돌아왔습니다.');};hub.querySelector('#hub-settings').onclick=settings;hub.querySelector('.spatial-inventory').onclick=()=>{stop();inventory();};hub.querySelector('.focus-room').onclick=()=>{stop();enter();};hub.querySelectorAll('[data-note]').forEach(b=>b.onclick=()=>{stop();notes(b.dataset.note);});
+ hub.querySelector('.spatial-home').onclick=()=>{stop();player.x=-10;player.z=3;say('입구로 돌아왔습니다.');};hub.querySelector('#hub-settings').onclick=settings;hub.querySelector('.spatial-inventory').onclick=()=>{stop();inventory();};hub.querySelector('.focus-room').onclick=()=>{if(player.x> -5){say('범죄현장에서 정밀 조사를 시작할 수 있습니다.');return;}stop();enter();};hub.querySelectorAll('[data-note]').forEach(b=>b.onclick=()=>{stop();notes(b.dataset.note);});
  function resize(){const w=area.clientWidth,h=area.clientHeight;if(!w||!h)return;renderer.setSize(w,h);const aspect=w/h;camera.left=-8.6*aspect;camera.right=8.6*aspect;camera.top=8.6;camera.bottom=-8.6;camera.updateProjectionMatrix();}new ResizeObserver(resize).observe(area);
  for(const b of hub.querySelectorAll('[data-zoom]'))b.onclick=()=>{camera.zoom=Math.max(.8,Math.min(1.8,camera.zoom+(b.dataset.zoom==='in'?.15:-.15)));camera.updateProjectionMatrix();};
  const reduce=matchMedia('(prefers-reduced-motion: reduce)');let settingsAt=0;
- function frame(now){requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000||0);last=now;if(!active()){stop();return;}if(now-settingsAt>500){settingsAt=now;try{const prefs=JSON.parse(localStorage.getItem('bio-display-v1'));renderer.toneMappingExposure=1.15*(prefs?.brightness??100)/100;}catch{}}const desired=doorOpen?Math.PI/2:0;doorAngle+=(desired-doorAngle)*Math.min(1,dt*8);hinge.rotation.y=-doorAngle;
+ function frame(now){requestAnimationFrame(frame);const dt=Math.min(.15,(now-last)/1000||0);last=now;if(!active()){stop();return;}if(now-settingsAt>500){settingsAt=now;try{const prefs=JSON.parse(localStorage.getItem('bio-display-v1'));renderer.toneMappingExposure=1.15*(prefs?.brightness??100)/100;}catch{}}const desired=doorOpen?Math.PI/2:0;if(Math.abs(desired-doorAngle)>.001)renderer.shadowMap.needsUpdate=true;doorAngle+=(desired-doorAngle)*Math.min(1,dt*8);hinge.rotation.y=-doorAngle;
  let sx=Number(keys.has('right'))-Number(keys.has('left')),sy=Number(keys.has('down'))-Number(keys.has('up'));let dx=sx*.78+sy*.625,dz=-sx*.625+sy*.78;
- if(route.length){const p=route[0];dx=p.x-player.x;dz=p.z-player.z;if(Math.hypot(dx,dz)<.12){route.shift();dx=dz=0;}}
- const moving=stepPlayer(player,dx,dz,dt,solids());if(moving){phase+=dt*2.6;const screenX=dx*.78-dz*.625,screenY=dx*.625+dz*.78;direction=Math.abs(screenX)>Math.abs(screenY)?(screenX>0?'right':'left'):(screenY>0?'down':'up');}
- near=targets.filter(t=>Math.hypot(player.x-t.x,player.z-t.z)<t.range).sort((a,b)=>Math.hypot(player.x-a.x,player.z-a.z)-Math.hypot(player.x-b.x,player.z-b.z))[0];action.disabled=!near;action.textContent=near?near.name+' · E':'가까이 다가가 조사하세요';
+ if(route.length){const p=route[0];dx=p.x-player.x;dz=p.z-player.z;if(Math.hypot(dx,dz)<.12){route.shift();dx=dz=0;if(!route.length&&destinationName){say(destinationName+' 입구에 도착했습니다.');destinationName='';}}}
+ const moving=stepPlayer(player,dx,dz,route.length?Math.min(dt,Math.hypot(dx,dz)/2.65):dt,solids());if(moving){phase+=dt*2.6;const screenX=dx*.78-dz*.625,screenY=dx*.625+dz*.78;direction=Math.abs(screenX)>Math.abs(screenY)?(screenX>0?'right':'left'):(screenY>0?'down':'up');}
+ const currentRoom=player.z>.3?'연결 복도':player.x< -5?'범죄현장':player.x>5?'수사기록실':'분석실';hub.querySelector('.hub-header p').textContent='새봄 연구소 · '+currentRoom;for(const b of zoneBar.children)b.setAttribute('aria-current',b.textContent===currentRoom?'location':'false');
+ near=targets.filter(sameRoom).filter(t=>Math.hypot(player.x-t.x,player.z-t.z)<t.range).sort((a,b)=>Math.hypot(player.x-a.x,player.z-a.z)-Math.hypot(player.x-b.x,player.z-b.z))[0];action.disabled=!near;action.textContent=near?near.name+' · E':'가까이 다가가 조사하세요';
  marker.visible=!!near;if(near)marker.position.set(near.x,.04,near.z);
- focus.lerp(new T.Vector3(player.x*.55,0,player.z*.45-1),1-Math.exp(-dt*3));camera.position.copy(focus).add(cameraOffset);camera.lookAt(focus);camera.updateMatrixWorld();
- objectLabel.hidden=!near;if(near){objectLabel.textContent=near.name;labelPoint.set(near.x,2.2,near.z).project(camera);const w=area.clientWidth,h=area.clientHeight;objectLabel.style.left=Math.max(100,Math.min(w-100,(labelPoint.x+1)*w/2))+'px';objectLabel.style.top=Math.max(120,Math.min(h-170,(1-labelPoint.y)*h/2))+'px';}
+ focus.lerp(new T.Vector3(player.x*.86,0,player.z*.55-1),1-Math.exp(-dt*3));camera.position.copy(focus).add(cameraOffset);camera.lookAt(focus);camera.updateMatrixWorld();
+ objectLabel.hidden=!near;if(near){objectLabel.textContent=near.name;labelPoint.set(near.x,2.2,near.z).project(camera);const w=area.clientWidth,h=area.clientHeight;objectLabel.style.left=Math.max(100,Math.min(w-100,(labelPoint.x+1)*w/2))+'px';objectLabel.style.top=Math.max(w<1100?185:120,Math.min(h-170,(1-labelPoint.y)*h/2))+'px';}
  actorContext.clearRect(0,0,128,128);drawInvestigator(actorContext,64,120,now,moving,direction,phase);actorTexture.needsUpdate=true;actor.quaternion.copy(camera.quaternion);actor.position.set(player.x,.86,player.z);shadow.position.set(player.x,.045,player.z);
  dc.fillStyle='#123141';dc.fillRect(0,0,256,128);dc.fillStyle='#89c9bb';dc.font='18px monospace';dc.fillText('SEQUENCE / READY',12,25);for(let i=0;i<24;i++){const h=15+Math.sin((reduce.matches?0:now*.001)+i*.7)*10;dc.fillRect(12+i*10,82-h,4,h);}displayTex.needsUpdate=true;
- if(!reduce.matches){rotor.rotation.z+=dt*2;plants.forEach((p,i)=>p.rotation.z=Math.sin(now*.0015+i)*(p.userData.rustle>now?.09:.015));lamps.forEach((l,i)=>l.intensity=7+Math.sin(now*.0008+i)*.15);}
+ if(!reduce.matches){rotor.rotation.z+=dt*2;plants.forEach((p,i)=>p.rotation.z=Math.sin(now*.0015+i)*(p.userData.rustle>now?.09:.015));lamps.forEach((l,i)=>l.intensity=(l.userData.base??7)+Math.sin(now*.0008+i)*.15);}
  renderer.render(scene,camera);
  }
  requestAnimationFrame(frame);hub.querySelector('.spatial-loading').remove();return hub;
