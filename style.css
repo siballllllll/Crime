@@ -59,3 +59,8 @@ body.immersive:has(#notebook){overflow:hidden}
 .notebook-launch small{display:inline!important;font-size:12px!important;margin-left:6px}
 @media(max-width:900px){#notebook .workspace{grid-template-columns:1fr}#notebook .workspace>aside{margin-top:8px}}
 @media(max-width:600px){#notebook{width:calc(100vw - 16px);height:calc(100dvh - 24px);border-left-width:5px}#notebook .notebook-heading{padding:12px;height:82px;gap:8px}.notebook-kicker{font-size:9px;letter-spacing:.5px}#notebook-title{font-size:21px}.notebook-tools{gap:5px}#notebook #guide{font-size:12px;padding:9px}#notebook #return-room{font-size:13px;padding:9px}#return-room small{display:none}#notebook .intro{padding:10px 12px}#notebook .intro h1{font-size:15px}#notebook #tabs{padding:8px;gap:5px;display:grid;grid-template-columns:1fr 1fr}#notebook #tabs button{font-size:14px;padding:9px 5px}#notebook .workspace{padding:12px}}
+
+/* Fixed, high-contrast aiming point in the actual camera viewport. */
+.first-person .fp-reticle{width:12px;height:12px;font-size:0;border:1px solid #ffffffd9;border-radius:50%;box-shadow:0 0 0 1px #071018b3,0 0 5px #0009;background:transparent}
+.first-person .fp-reticle::after{content:'';position:absolute;width:2px;height:2px;left:4px;top:4px;border-radius:50%;background:#fff}
+.first-person #fp-target:not(:empty){background:#10232ee8;border:1px solid #91a3a9;border-radius:5px;padding:6px 12px;font-size:14px;color:#f5edda;text-shadow:none}

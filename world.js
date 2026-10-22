@@ -1,3 +1,4 @@
+import {dressCrimeScene} from './crime-art.js?v=1';
 import {createHub} from './spatial-hub.js?v=5';
 import * as T from './vendor/three.module.js';
 import {illustration} from './illustrations.js';
@@ -75,12 +76,39 @@ function inspectTerminal(){if(s.selected!=='card'&&!done('terminal'))return moda
 const ray=new T.Raycaster(),pointer=new T.Vector2();let hovered=null;function hit(e){camera.updateMatrixWorld(true);const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hits=ray.intersectObjects(firstPerson?scene.children:clicks,true);if(firstPerson&&hits[0]?.distance>4.4)return null;if(!hits.length)return null;let o=hits[0].object;while(o&&!o.userData.fn)o=o.parent;return o}
 function inspectObject(o){if(fieldMenu||!o||$('#modal').open||$('#notebook').open||$('#game').hidden)return;activeInspect=o.userData.id;if(!firstPerson)zoom={at:o.position.clone()};$('#cross-label').style.display='none';o.userData.fn()}
 function centerObject(){const r=renderer.domElement.getBoundingClientRect();return hit({clientX:r.left+r.width/2,clientY:r.top+r.height/2})}
-renderer.domElement.addEventListener('pointermove',e=>{if(firstPerson){if(desktopPointer()&&document.pointerLockElement!==renderer.domElement&&!$('#modal').open&&!$('#notebook').open&&!$('#game').hidden&&!fieldMenu){if(fallbackPointer){player.yaw-=(e.clientX-fallbackPointer.x)*.0025;player.pitch=Math.max(-1.05,Math.min(.85,player.pitch-(e.clientY-fallbackPointer.y)*.0025));forceRender=true}fallbackPointer={x:e.clientX,y:e.clientY}}else if(!desktopPointer()&&drag&&drag.id===e.pointerId){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.total+=Math.abs(dx)+Math.abs(dy);player.yaw-=dx*.005;player.pitch=Math.max(-1.05,Math.min(.85,player.pitch-dy*.005));drag.x=e.clientX;drag.y=e.clientY;forceRender=true}return}hovered=hit(e);renderer.domElement.style.cursor=hovered?'pointer':'grab';const label=$('#cross-label');label.style.display=hovered?'block':'none';if(hovered){label.textContent=hovered.userData.name;label.style.left=Math.min(e.clientX+15,innerWidth-220)+'px';label.style.top=(e.clientY-40)+'px'}});
-document.addEventListener('mousemove',e=>{if(firstPerson&&desktopPointer()&&document.pointerLockElement===renderer.domElement&&!$('#modal').open&&!$('#notebook').open&&!$('#game').hidden&&!fieldMenu){player.yaw-=e.movementX*.0025;player.pitch=Math.max(-1.05,Math.min(.85,player.pitch-e.movementY*.0025));forceRender=true}});
-renderer.domElement.addEventListener('pointerdown',e=>{if(firstPerson&&!desktopPointer()&&!document.pointerLockElement){drag={id:e.pointerId,x:e.clientX,y:e.clientY,total:0};renderer.domElement.setPointerCapture(e.pointerId)}});
+function lookBy(dx,dy){player.yaw-=dx*.002;player.pitch=Math.max(-1.15,Math.min(1.15,player.pitch-dy*.002));forceRender=true;}
+function canLook(){return firstPerson&&!fieldMenu&&!$('#modal').open&&!$('#notebook').open&&!$('#game').hidden;}
+function lookHelp(){
+ const locked=document.pointerLockElement===renderer.domElement;
+ $('.fp-instructions').textContent=locked?'마우스: 시선 · WASD: 이동 · E/클릭: 조사 · Esc: 마우스 해제':pointerLockUnavailable?'마우스 고정이 제한된 화면 · 드래그: 시선 · WASD: 이동 · E: 조사':'화면 클릭: FPS 시선 시작 · WASD: 이동 · E: 조사';
+ renderer.domElement.style.cursor=locked?'none':pointerLockUnavailable?'grab':'crosshair';
+}
+renderer.domElement.addEventListener('pointermove',e=>{
+ if(firstPerson){
+  if(canLook()&&drag&&drag.id===e.pointerId&&document.pointerLockElement!==renderer.domElement){
+   const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.total+=Math.abs(dx)+Math.abs(dy);lookBy(dx,dy);drag.x=e.clientX;drag.y=e.clientY;
+  }return;
+ }
+ hovered=hit(e);renderer.domElement.style.cursor=hovered?'pointer':'grab';
+ const label=$('#cross-label');label.style.display=hovered?'block':'none';
+ if(hovered){label.textContent=hovered.userData.name;label.style.left=Math.min(e.clientX+15,innerWidth-220)+'px';label.style.top=(e.clientY-40)+'px'}
+});
+document.addEventListener('mousemove',e=>{if(canLook()&&document.pointerLockElement===renderer.domElement)lookBy(e.movementX,e.movementY)});
+renderer.domElement.addEventListener('pointerdown',e=>{
+ if(canLook()&&document.pointerLockElement!==renderer.domElement&&(!desktopPointer()||pointerLockUnavailable)){
+  drag={id:e.pointerId,x:e.clientX,y:e.clientY,total:0};renderer.domElement.setPointerCapture(e.pointerId);
+ }
+});
 renderer.domElement.addEventListener('pointerup',e=>{if(drag?.id===e.pointerId){suppressClick=drag.total>6;drag=null}});
-renderer.domElement.addEventListener('pointercancel',()=>{drag=null;held.clear()});
-renderer.domElement.addEventListener('click',e=>{if(fieldMenu)return;if(suppressClick){suppressClick=false;return}if(firstPerson&&desktopPointer()&&!pointerLockUnavailable&&document.pointerLockElement!==renderer.domElement&&renderer.domElement.requestPointerLock){try{const request=renderer.domElement.requestPointerLock();request?.catch?.(()=>{pointerLockUnavailable=true;note('이 브라우저에서는 마우스 고정 없이 움직임을 따라 시선을 조작합니다.')})}catch{pointerLockUnavailable=true;note('이 브라우저에서는 마우스 고정 없이 움직임을 따라 시선을 조작합니다.')}return}inspectObject(firstPerson&&desktopPointer()?centerObject():hit(e))});
+renderer.domElement.addEventListener('pointercancel',releaseControls);
+renderer.domElement.addEventListener('click',async e=>{
+ if(fieldMenu)return;if(suppressClick){suppressClick=false;return}
+ if(firstPerson&&desktopPointer()&&document.pointerLockElement!==renderer.domElement){
+  if(!pointerLockUnavailable){try{if(!renderer.domElement.requestPointerLock)throw Error('unsupported');await renderer.domElement.requestPointerLock()}catch{pointerLockUnavailable=true;lookHelp()}}
+  return;
+ }
+ inspectObject(firstPerson?centerObject():hit(e));
+});
 $('#turn-left').onclick=()=>{if(firstPerson){player.yaw+=.35;forceRender=true;return}targetAngle=Math.max(-.55,targetAngle-.35);zoom=null};$('#turn-right').onclick=()=>{if(firstPerson){player.yaw-=.35;forceRender=true;return}targetAngle=Math.min(.55,targetAngle+.35);zoom=null};$('#close').addEventListener('click',()=>zoom=null);$('#modal').addEventListener('close',()=>zoom=null);
 const objectIds=['drawer','notebook','culture','pcr','cabinet','terminal','sequencer'];
 clicks.forEach((o,i)=>{o.userData.id=objectIds[i];const bounds=new T.Box3().setFromObject(o);o.userData.anchor=bounds.getCenter(new T.Vector3());o.userData.anchor.y=bounds.max.y+.1});
@@ -94,18 +122,21 @@ function applySettings(){localStorage.setItem('bio-display-v1',JSON.stringify(pr
 function positionMarkers(){const w=$('#viewport').clientWidth,h=$('#viewport').clientHeight;const visible=!$('#modal').open&&!$('#notebook').open&&!firstPerson;markerLayer.style.visibility=leaderLayer.style.visibility=visible?'visible':'hidden';if(!visible)return;const current=null;const toolTarget=null;const positioned=clicks.map(o=>{const v=o.userData.anchor.clone().project(camera);return{o,x:(v.x+1)*w/2,y:(1-v.y)*h/2}}).sort((a,b)=>a.y-b.y);let occupied=[];for(const p of positioned){const {o}=p,b=o.userData.marker,isCurrent=o.userData.id===current;b.hidden=!prefs.labels&&!isCurrent&&o.userData.id!==toolTarget;o.userData.line.style.display=b.hidden?'none':'';b.classList.toggle('recommended',isCurrent);b.classList.toggle('tool-target',o.userData.id===toolTarget);b.classList.toggle('locate-pulse',isCurrent&&performance.now()<flashUntil);const width=b.offsetWidth||115,height=32;let x=Math.max(6,Math.min(w-width-6,p.x-width/2)),y=Math.max(8,Math.min(h-height-8,p.y-40));for(let pass=0;pass<8;pass++){const clash=occupied.find(r=>x<r.x+r.w+6&&x+width+6>r.x&&y<r.y+r.h+6&&y+height+6>r.y);if(!clash)break;y=clash.y+clash.h+9;if(y>h-height-8){y=Math.max(8,clash.y-height-9);x=Math.min(w-width-6,x+width/2)}}occupied.push({x,y,w:width,h:height});b.style.left=x+'px';b.style.top=y+'px';const l=o.userData.line;l.setAttribute('x1',x+width/2);l.setAttribute('y1',y+height);l.setAttribute('x2',p.x);l.setAttribute('y2',p.y);l.setAttribute('class',isCurrent?'active':'');}}
 function resize(){const w=$('#viewport').clientWidth,h=$('#viewport').clientHeight;if(!w||!h)return;renderer.setSize(w,h);renderer.shadowMap.needsUpdate=true;forceRender=true;camera.aspect=w/h;camera.updateProjectionMatrix()}window.addEventListener('resize',resize);resize();
 const firstWalls=new T.Group();scene.add(firstWalls);box(5.45,2.1,0,.22,4.5,9,'#445e60',firstWalls);box(0,2.1,4.45,11,4.5,.22,'#435958',firstWalls);box(0,4.45,0,11,.16,9,'#3a5152',firstWalls);box(.1,1.65,4.31,1.7,3.3,.08,'#203c3c',firstWalls);firstWalls.visible=false;
+dressCrimeScene({scene,renderer,box,cyl,culture,pcr,sequencer,notebook,firstWalls});
 const torch=new T.PointLight('#c1d8cf',0,6);scene.add(torch);
 const fpHud=document.createElement('div');fpHud.id='fp-hud';fpHud.hidden=true;fpHud.innerHTML='<div class="fp-reticle" aria-hidden="true">＋</div><div id="fp-target" role="status"></div><div class="fp-controls"><div class="fp-move"><button data-move="forward" aria-label="앞으로 이동">↑</button><button data-move="left" aria-label="왼쪽으로 이동">←</button><button data-move="back" aria-label="뒤로 이동">↓</button><button data-move="right" aria-label="오른쪽으로 이동">→</button></div><button id="fp-interact" disabled>대상 없음</button><button id="fp-reset">입구로 돌아가기</button></div><p class="fp-instructions">WASD / 방향키 이동 · 화면 안에서 마우스로 시선 · E / 클릭 조사</p>';$('#viewport').appendChild(fpHud);
-function togglePerspective(){releaseControls();firstPerson=!firstPerson;zoom=null;suppressClick=false;if(firstPerson){player.yaw=START.yaw;player.pitch=START.pitch;syncFirstPersonCamera();}firstWalls.visible=firstPerson;renderer.shadowMap.needsUpdate=true;torch.intensity=firstPerson?3:0;camera.fov=firstPerson?67:39;camera.updateProjectionMatrix();fpHud.hidden=!firstPerson;$('.fp-instructions').textContent=desktopPointer()?'화면 클릭: 마우스 고정 · 마우스: 시선 · WASD: 이동 · E/클릭: 조사 · Esc: 해제':'방향 버튼 이동 · 화면 드래그로 시선 · 조사 버튼';$('#game').classList.toggle('first-person',firstPerson);$('#perspective-toggle').textContent=firstPerson?'전체 보기':'1인칭으로 보기';$('#view-name').textContent=firstPerson?'1인칭 수사':'배양실';$('#cross-label').style.display='none';forceRender=true;note(firstPerson&&desktopPointer()?'게임 화면을 한 번 클릭하면 일반 FPS 방식으로 마우스가 중앙에 고정됩니다. Esc로 해제할 수 있습니다.':firstPerson?'화면을 드래그해 둘러보세요.':'전체 보기로 전환했습니다.');}
+function togglePerspective(){releaseControls();firstPerson=!firstPerson;zoom=null;suppressClick=false;if(firstPerson){player.yaw=START.yaw;player.pitch=START.pitch;syncFirstPersonCamera();}firstWalls.visible=firstPerson;renderer.shadowMap.needsUpdate=true;torch.intensity=firstPerson?3:0;camera.fov=firstPerson?67:39;camera.updateProjectionMatrix();fpHud.hidden=!firstPerson;$('.fp-instructions').textContent=desktopPointer()?'화면 클릭: 마우스 고정 · 마우스: 시선 · WASD: 이동 · E/클릭: 조사 · Esc: 해제':'방향 버튼 이동 · 화면 드래그로 시선 · 조사 버튼';$('#game').classList.toggle('first-person',firstPerson);$('#perspective-toggle').textContent=firstPerson?'전체 보기':'1인칭으로 보기';$('#view-name').textContent=firstPerson?'1인칭 수사':'배양실';$('#cross-label').style.display='none';if(firstPerson)lookHelp();forceRender=true;note(firstPerson&&desktopPointer()?'게임 화면을 한 번 클릭하면 일반 FPS 방식으로 마우스가 중앙에 고정됩니다. Esc로 해제할 수 있습니다.':firstPerson?'화면을 드래그해 둘러보세요.':'전체 보기로 전환했습니다.');}
 $('#perspective-toggle').onclick=togglePerspective;
 $('#fp-reset').onclick=()=>{releaseControls();Object.assign(player,START);forceRender=true};
 $('#fp-interact').onclick=()=>inspectObject(centerObject());
 for(const b of document.querySelectorAll('[data-move]')){b.onpointerdown=e=>{e.preventDefault();held.add(b.dataset.move);b.setPointerCapture(e.pointerId)};for(const type of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(type,()=>held.delete(b.dataset.move));}
 const keyMap={KeyW:'forward',ArrowUp:'forward',KeyS:'back',ArrowDown:'back',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
 window.addEventListener('keydown',e=>{if(!firstPerson||$('#game').hidden||$('#modal').open||$('#notebook').open||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)&&e.target!==document.body)return;if(e.code==='Escape'){releaseControls();return}if(fieldMenu)return;if(keyMap[e.code]){e.preventDefault();held.add(keyMap[e.code])}if(e.code==='KeyE'&&!e.repeat){e.preventDefault();inspectObject(centerObject())}});
-renderer.domElement.addEventListener('pointerenter',e=>{suppressClick=false;fallbackPointer={x:e.clientX,y:e.clientY}});renderer.domElement.addEventListener('pointerleave',()=>{fallbackPointer=null});
-document.addEventListener('pointerlockchange',()=>{fallbackPointer=null;if(!firstPerson||!desktopPointer())return;const locked=document.pointerLockElement===renderer.domElement;note(locked?'FPS 마우스가 고정됐습니다. WASD로 이동하고 E 또는 클릭으로 조사하세요.':'마우스 고정이 해제됐습니다. 마우스를 움직여 둘러보거나 화면을 클릭해 다시 고정하세요.')});
-document.addEventListener('pointerlockerror',()=>{pointerLockUnavailable=true;note('이 브라우저에서는 마우스 고정 없이 움직임을 따라 시선을 조작합니다.')});
+document.addEventListener('pointerlockchange',()=>{releaseDrag();if(firstPerson)lookHelp()});
+function releaseDrag(){fallbackPointer=null;drag=null;held.clear();}
+document.addEventListener('pointerlockerror',()=>{pointerLockUnavailable=true;releaseDrag();if(firstPerson)lookHelp()});
+document.addEventListener('fullscreenchange',()=>{releaseControls();resize()});
+new ResizeObserver(()=>{releaseDrag();resize()}).observe($('#viewport'));
 window.addEventListener('keyup',e=>{if(keyMap[e.code])held.delete(keyMap[e.code])});window.addEventListener('blur',releaseControls);document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseControls()});
 function syncFirstPersonCamera(){camera.position.set(player.x,2.9,player.z);camera.rotation.order='YXZ';camera.rotation.set(player.pitch,player.yaw,0);camera.updateMatrixWorld(true);torch.position.copy(camera.position);}
 const target=new T.Vector3(0,1,0);function frame(now=0){requestAnimationFrame(frame);const dt=Math.min(.05,Math.max(0,(now-lastFrame)/1000));lastFrame=now;if($('#game').hidden)return;if(firstPerson){if(!$('#modal').open&&!$('#notebook').open&&!fieldMenu){const oldX=player.x,oldZ=player.z;movePlayer(player,Number(held.has('forward'))-Number(held.has('back')),Number(held.has('right'))-Number(held.has('left')),dt);if(player.x!==oldX||player.z!==oldZ)forceRender=true}syncFirstPersonCamera();const o=$('#modal').open?null:centerObject();$('#fp-target').textContent=o?o.userData.name:'';$('#fp-interact').textContent=o?'조사하기 · E':'가까이 다가가세요';$('#fp-interact').disabled=!o;positionMarkers();if(forceRender||renderer.shadowMap.needsUpdate){renderer.render(scene,camera);forceRender=false}return;}angle+=(targetAngle-angle)*.045;const radius=Math.max(17,18/Math.max(.4,camera.aspect));let desired=new T.Vector3(Math.sin(.65+angle)*radius,radius*.66,Math.cos(.65+angle)*radius);let look=new T.Vector3(0,.8,0);if(zoom){look=zoom.at.clone();desired=look.clone().add(new T.Vector3(5,4,7))}camera.position.lerp(desired,.045);target.lerp(look,.055);camera.lookAt(target);positionMarkers();if(forceRender||camera.position.distanceTo(desired)>.002||target.distanceTo(look)>.002||renderer.shadowMap.needsUpdate){renderer.render(scene,camera);forceRender=false}}frame();save();$('#world-loading').remove();
@@ -124,7 +155,7 @@ const fieldBar=document.createElement('div');fieldBar.className='field-bar';fiel
 $('#field-notes').onclick=()=>openNotes('board');$('#field-exit').onclick=showHub;$('#field-menu').onclick=toggleFieldMenu;
 function labMenu(){modal('분석실 · 검사 장비','<p>현장에서 확보한 시료를 검사합니다. 시료 튜브와 증폭 DNA는 아래 버튼에서 장비에 넣을 수 있습니다.</p>',[['시료를 PCR 장비에 넣기',()=>{s.selected=has('sample')?'sample':null;save();inspectPcr()}],['증폭 DNA를 서열 분석기에 넣기',()=>{s.selected=has('amp')?'amp':null;save();inspectSequence()}],['확보한 검사 기록',()=>{$('#modal').close();openNotes('board')}]]);}
 $('#game').appendChild(createHub({enter:enterField,notes:openNotes,lab:labMenu,settings:()=>$('#settings-button').click(),observe:(title,body)=>modal('물건을 관찰 · '+title,'<p>'+body+'</p>'),inventory:()=>modal('물건을 관찰 · 도구함','<p>도구를 선택한 다음 현장 장비를 조사하세요.</p>',Object.keys(itemInfo).filter(has).map(id=>[itemInfo[id][0],()=>{s.selected=id;save();$('#modal').close();}])),investigate:id=>({culture:inspectCulture,notebook:inspectNotebook,pcr:inspectPcr,sequencer:inspectSequence,cabinet:inspectCabinet,drawer:inspectDrawer,terminal:inspectTerminal}[id]?.())}));
-window.addEventListener('keydown',e=>{if(!firstPerson||$('#game').hidden||$('#modal').open||$('#notebook').open||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.repeat)return;if(e.code==='KeyI'||e.code==='Escape'){e.preventDefault();toggleFieldMenu();}});
+window.addEventListener('keydown',e=>{if(!firstPerson||$('#game').hidden||$('#modal').open||$('#notebook').open||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.repeat)return;if(e.code==='KeyI'){e.preventDefault();toggleFieldMenu();}else if(e.code==='Escape'&&fieldMenu){e.preventDefault();closeFieldMenu();}});
 showHub();
 
 // A native dialog keeps focus inside the notebook and the scene visible behind it.
