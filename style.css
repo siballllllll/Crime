@@ -28,3 +28,34 @@
 .dossier-card dd,.record-body,.card p,.report p{font-size:15px;line-height:1.85;color:#d0dce1}.dossier-card dt,.student-hypothesis label{font-size:13px;color:#e0cc9b}.student-hypothesis select,.student-hypothesis textarea{font-size:15px;line-height:1.6}.record-meta,.genetic-file p,.board-intro{font-size:13px;line-height:1.8;color:#bfcfd7}.data{font-size:15px;line-height:1.9}.board-filters button{font-size:14px;min-height:42px}.first-person.field-menu #inventory .inventory-slot>span{font-size:13px}.first-person.field-menu #item-detail p{font-size:14px}.first-person.field-menu #message{font-size:13px;line-height:1.7}
 .spatial-caption span,.spatial-status,.spatial-object-label{word-break:keep-all;overflow-wrap:break-word}
 .room-directory{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:3;display:flex;gap:6px;border:0;margin:0;padding:5px;background:#122733f2;border-radius:8px}.room-directory button{font-size:14px;padding:8px 12px;color:#e4e9df;border:1px solid #738a8f;border-radius:5px}.room-directory button:first-child{border-color:#7fa6c9}.room-directory button:last-child{border-color:#c4a370}.room-directory button[aria-current=location]{background:#536c6c;color:#fff6d6}@media(max-width:1100px){.room-directory{top:122px;max-width:calc(100% - 20px);width:max-content}.room-directory button{font-size:12px;padding:7px 9px}.spatial-object-label{z-index:2}}
+
+/* In-game notebook: fixed cover, tabs and independently scrolling pages. */
+body.immersive:has(#notebook){overflow:hidden}
+#notebook{width:min(1120px,calc(100vw - 48px));max-width:none;height:min(840px,calc(100dvh - 64px));max-height:none;margin:auto;padding:0;border:2px solid #968464;border-left:9px solid #68533e;border-radius:12px;background:#14232b;color:#eef1e9;box-shadow:0 24px 90px #000a;overflow:hidden}
+#notebook[open]{display:flex;flex-direction:column}
+#notebook::backdrop{background:#030b13a8}
+#notebook .notebook-heading{flex:none;height:88px;padding:14px 24px;background:linear-gradient(110deg,#372e26,#202d32);border-bottom:1px solid #8c7859}
+#notebook-title{font-size:24px;letter-spacing:1px;margin:5px 0 0;color:#fff1cd}
+.notebook-kicker{font-size:11px;letter-spacing:1.5px;color:#ccbd9d}
+.notebook-tools{display:flex;gap:10px;align-items:center}
+#notebook #return-room{position:static;margin:0;min-height:44px;background:#473d30;border:1px solid #b8a17b;padding:10px 16px;font-size:15px;color:#fff2d3}
+#return-room small{font-size:11px;opacity:.8;margin-left:6px}
+#notebook main{display:flex;flex-direction:column;min-height:0;max-width:none;width:100%;padding:0;margin:0;overflow:hidden}
+#notebook .intro{flex:none;margin:0;padding:12px 24px;border-bottom:1px solid #344a53;gap:12px}
+#notebook .intro h1{font-size:17px;letter-spacing:0;margin:0}
+#notebook .eyebrow,#notebook .subtitle,#notebook .clock small,#notebook main>footer{display:none}
+#notebook .clock{flex-direction:row;align-items:center;gap:10px;font-size:12px}
+#notebook .clock strong{font-size:18px}
+#notebook #tabs{flex:none;gap:8px;margin:0;padding:10px 20px;background:#101f28;flex-wrap:wrap}
+#notebook #tabs button{font-size:15px;padding:11px 15px;border:1px solid #435761;border-radius:6px;color:#dae3e7}
+#notebook #tabs button.active{background:#d8c59b;color:#17252b;border-color:#eeddba;font-weight:700}
+#notebook .workspace{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:#8b805f #15252e;padding:22px;gap:20px;grid-template-columns:minmax(0,1fr) 230px}
+#notebook .workspace>aside{padding:18px;background:#192c35;border-color:#43555e}
+#notebook .workspace>aside p{color:#c6d3d8;font-size:14px;line-height:1.8}
+#notebook .text-button{font-size:13px}
+#notebook .dossier-card,#notebook .evidence-card{padding:18px}
+.notebook-launch>span{font-size:23px;vertical-align:middle;margin-right:6px;color:#efd09b}
+.spatial-hub .hub-footer .notebook-launch{border-color:#b9a077;background:#443b2d;color:#fff1d2}
+.notebook-launch small{display:inline!important;font-size:12px!important;margin-left:6px}
+@media(max-width:900px){#notebook .workspace{grid-template-columns:1fr}#notebook .workspace>aside{margin-top:8px}}
+@media(max-width:600px){#notebook{width:calc(100vw - 16px);height:calc(100dvh - 24px);border-left-width:5px}#notebook .notebook-heading{padding:12px;height:82px;gap:8px}.notebook-kicker{font-size:9px;letter-spacing:.5px}#notebook-title{font-size:21px}.notebook-tools{gap:5px}#notebook #guide{font-size:12px;padding:9px}#notebook #return-room{font-size:13px;padding:9px}#return-room small{display:none}#notebook .intro{padding:10px 12px}#notebook .intro h1{font-size:15px}#notebook #tabs{padding:8px;gap:5px;display:grid;grid-template-columns:1fr 1fr}#notebook #tabs button{font-size:14px;padding:9px 5px}#notebook .workspace{padding:12px}}
