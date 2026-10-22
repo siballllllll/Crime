@@ -1,5 +1,5 @@
 import {dressCrimeScene} from './crime-art.js?v=1';
-import {createHub} from './spatial-hub.js?v=6';
+import {createHub} from './spatial-hub.js?v=7';
 import * as T from './vendor/three.module.js';
 import {illustration} from './illustrations.js';
 import {START,movePlayer} from './navigation.js';
