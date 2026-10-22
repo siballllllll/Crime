@@ -25,7 +25,7 @@ const goals=[
 ['interpret','염기서열 비교하기','증폭 DNA를 선택한 뒤 앞쪽 분석기에 넣으세요. 결과의 의미까지 기록합니다.','sequencer'],
 ['terminal','출입·반출 기록 확인','직원 카드를 선택한 뒤 왼쪽 출입 단말을 누르세요.','terminal']
 ];
-let activeInspect='notebook';let prefs;try{prefs=JSON.parse(localStorage.getItem('bio-display-v1'))}catch{}prefs={brightness:100,labels:true,...prefs};
+let activeInspect='notebook';let prefs;try{prefs=JSON.parse(localStorage.getItem('bio-display-v1'))}catch{}prefs={brightness:100,labels:true,sensitivity:100,...prefs};
 function complete(g){return g[0]==='sample'?has('sample'):done(g[0])}function currentGoal(){return goals.find(g=>!complete(g))}
 function inventory(){
 $('#inventory').innerHTML=Object.keys(itemInfo).filter(id=>id!=='key'||has('key')).map(id=>`<button data-item="${id}" ${!has(id)?'disabled':''} aria-pressed="${s.selected===id}" class="inventory-slot ${has(id)?'acquired':'empty'} ${s.selected===id?'selected':''}">${has(id)?illustration(id):'<span class="slot-placeholder">＋</span>'}<span>${has(id)?itemInfo[id][0]:'미확보'}</span>${s.selected===id?'<small>선택 중</small>':''}</button>`).join('');
@@ -76,12 +76,30 @@ function inspectTerminal(){if(s.selected!=='card'&&!done('terminal'))return moda
 const ray=new T.Raycaster(),pointer=new T.Vector2();let hovered=null;function hit(e){camera.updateMatrixWorld(true);const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hits=ray.intersectObjects(firstPerson?scene.children:clicks,true);if(firstPerson&&hits[0]?.distance>4.4)return null;if(!hits.length)return null;let o=hits[0].object;while(o&&!o.userData.fn)o=o.parent;return o}
 function inspectObject(o){if(fieldMenu||!o||$('#modal').open||$('#notebook').open||$('#game').hidden)return;activeInspect=o.userData.id;if(!firstPerson)zoom={at:o.position.clone()};$('#cross-label').style.display='none';o.userData.fn()}
 function centerObject(){const r=renderer.domElement.getBoundingClientRect();return hit({clientX:r.left+r.width/2,clientY:r.top+r.height/2})}
-function lookBy(dx,dy){player.yaw-=dx*.002;player.pitch=Math.max(-1.15,Math.min(1.15,player.pitch-dy*.002));forceRender=true;}
+function lookBy(dx,dy){player.yaw-=dx*.002*(prefs.sensitivity/100);player.pitch=Math.max(-1.15,Math.min(1.15,player.pitch-dy*.002*(prefs.sensitivity/100)));forceRender=true;}
 function canLook(){return firstPerson&&!fieldMenu&&!$('#modal').open&&!$('#notebook').open&&!$('#game').hidden;}
+let lockPending=false;
+async function startFpsLook(){
+ if(!firstPerson||!desktopPointer()||!canLook()||lockPending||document.pointerLockElement===renderer.domElement)return;
+ lockPending=true;pointerLockUnavailable=false;
+ try{
+  if(!renderer.domElement.requestPointerLock)throw Error('Pointer Lock unsupported');
+  await renderer.domElement.requestPointerLock();
+ }catch{pointerLockUnavailable=true}
+ finally{lockPending=false;lookHelp()}
+}
 function lookHelp(){
  const locked=document.pointerLockElement===renderer.domElement;
- $('.fp-instructions').textContent=locked?'마우스: 시선 · WASD: 이동 · E/클릭: 조사 · Esc: 마우스 해제':pointerLockUnavailable?'마우스 고정이 제한된 화면 · 드래그: 시선 · WASD: 이동 · E: 조사':'화면 클릭: FPS 시선 시작 · WASD: 이동 · E: 조사';
- renderer.domElement.style.cursor=locked?'none':pointerLockUnavailable?'grab':'crosshair';
+ const gate=$('#fps-lock-gate');
+ $('#game').classList.toggle('fps-locked',firstPerson&&locked);
+ if(gate){
+  gate.hidden=!firstPerson||!desktopPointer()||locked||fieldMenu||$('#modal').open||$('#notebook').open;
+  $('#fps-lock-title').textContent=pointerLockUnavailable?'이 화면에서 FPS 마우스 고정을 사용할 수 없습니다':'FPS 시선 조작';
+  $('#fps-lock-description').textContent=pointerLockUnavailable?'내장 브라우저가 마우스 고정을 제한할 수 있습니다. 새 탭에서 열어 주세요. 드래그 방식으로 바꾸지 않습니다.':'시작하면 커서가 사라지고 마우스 이동량에 따라 시선이 회전합니다. Esc를 누르면 해제됩니다.';
+  $('#fps-external').hidden=!pointerLockUnavailable;
+ }
+ $('.fp-instructions').textContent=!desktopPointer()?'방향 버튼: 이동 · 화면 드래그: 시선 · 조사 버튼':locked?'마우스: 시선 · WASD: 이동 · E/클릭: 조사 · N: 수첩 · I: 메뉴 · Esc: 해제':'FPS 시선 일시 정지 · 시작 버튼으로 재개';
+ renderer.domElement.style.cursor=locked?'none':'default';
 }
 renderer.domElement.addEventListener('pointermove',e=>{
  if(firstPerson){
@@ -95,7 +113,7 @@ renderer.domElement.addEventListener('pointermove',e=>{
 });
 document.addEventListener('mousemove',e=>{if(canLook()&&document.pointerLockElement===renderer.domElement)lookBy(e.movementX,e.movementY)});
 renderer.domElement.addEventListener('pointerdown',e=>{
- if(canLook()&&document.pointerLockElement!==renderer.domElement&&(!desktopPointer()||pointerLockUnavailable)){
+ if(canLook()&&document.pointerLockElement!==renderer.domElement&&!desktopPointer()){
   drag={id:e.pointerId,x:e.clientX,y:e.clientY,total:0};renderer.domElement.setPointerCapture(e.pointerId);
  }
 });
@@ -104,7 +122,7 @@ renderer.domElement.addEventListener('pointercancel',releaseControls);
 renderer.domElement.addEventListener('click',async e=>{
  if(fieldMenu)return;if(suppressClick){suppressClick=false;return}
  if(firstPerson&&desktopPointer()&&document.pointerLockElement!==renderer.domElement){
-  if(!pointerLockUnavailable){try{if(!renderer.domElement.requestPointerLock)throw Error('unsupported');await renderer.domElement.requestPointerLock()}catch{pointerLockUnavailable=true;lookHelp()}}
+  await startFpsLook();
   return;
  }
  inspectObject(firstPerson?centerObject():hit(e));
@@ -125,13 +143,13 @@ const firstWalls=new T.Group();scene.add(firstWalls);box(5.45,2.1,0,.22,4.5,9,'#
 dressCrimeScene({scene,renderer,box,cyl,culture,pcr,sequencer,notebook,firstWalls});
 const torch=new T.PointLight('#c1d8cf',0,6);scene.add(torch);
 const fpHud=document.createElement('div');fpHud.id='fp-hud';fpHud.hidden=true;fpHud.innerHTML='<div class="fp-reticle" aria-hidden="true">＋</div><div id="fp-target" role="status"></div><div class="fp-controls"><div class="fp-move"><button data-move="forward" aria-label="앞으로 이동">↑</button><button data-move="left" aria-label="왼쪽으로 이동">←</button><button data-move="back" aria-label="뒤로 이동">↓</button><button data-move="right" aria-label="오른쪽으로 이동">→</button></div><button id="fp-interact" disabled>대상 없음</button><button id="fp-reset">입구로 돌아가기</button></div><p class="fp-instructions">WASD / 방향키 이동 · 화면 안에서 마우스로 시선 · E / 클릭 조사</p>';$('#viewport').appendChild(fpHud);
-function togglePerspective(){releaseControls();firstPerson=!firstPerson;zoom=null;suppressClick=false;if(firstPerson){player.yaw=START.yaw;player.pitch=START.pitch;syncFirstPersonCamera();}firstWalls.visible=firstPerson;renderer.shadowMap.needsUpdate=true;torch.intensity=firstPerson?3:0;camera.fov=firstPerson?67:39;camera.updateProjectionMatrix();fpHud.hidden=!firstPerson;$('.fp-instructions').textContent=desktopPointer()?'화면 클릭: 마우스 고정 · 마우스: 시선 · WASD: 이동 · E/클릭: 조사 · Esc: 해제':'방향 버튼 이동 · 화면 드래그로 시선 · 조사 버튼';$('#game').classList.toggle('first-person',firstPerson);$('#perspective-toggle').textContent=firstPerson?'전체 보기':'1인칭으로 보기';$('#view-name').textContent=firstPerson?'1인칭 수사':'배양실';$('#cross-label').style.display='none';if(firstPerson)lookHelp();forceRender=true;note(firstPerson&&desktopPointer()?'게임 화면을 한 번 클릭하면 일반 FPS 방식으로 마우스가 중앙에 고정됩니다. Esc로 해제할 수 있습니다.':firstPerson?'화면을 드래그해 둘러보세요.':'전체 보기로 전환했습니다.');}
-$('#perspective-toggle').onclick=togglePerspective;
+function togglePerspective(){releaseControls();firstPerson=!firstPerson;zoom=null;suppressClick=false;if(firstPerson){player.yaw=START.yaw;player.pitch=START.pitch;syncFirstPersonCamera();}firstWalls.visible=firstPerson;renderer.shadowMap.needsUpdate=true;torch.intensity=firstPerson?3:0;camera.fov=firstPerson?67:39;camera.updateProjectionMatrix();fpHud.hidden=!firstPerson;$('.fp-instructions').textContent=desktopPointer()?'화면 클릭: 마우스 고정 · 마우스: 시선 · WASD: 이동 · E/클릭: 조사 · Esc: 해제':'방향 버튼 이동 · 화면 드래그로 시선 · 조사 버튼';$('#game').classList.toggle('first-person',firstPerson);$('#perspective-toggle').textContent=firstPerson?'전체 보기':'1인칭으로 보기';$('#view-name').textContent=firstPerson?'1인칭 수사':'배양실';$('#cross-label').style.display='none';if(firstPerson)lookHelp();forceRender=true;note(firstPerson&&desktopPointer()?'FPS 마우스 고정을 요청했습니다. 마우스로 시선을 조작하고 Esc로 해제하세요.':firstPerson?'화면을 드래그해 둘러보세요.':'전체 보기로 전환했습니다.');}
+$('#perspective-toggle').onclick=()=>{togglePerspective();if(firstPerson)startFpsLook()};
 $('#fp-reset').onclick=()=>{releaseControls();Object.assign(player,START);forceRender=true};
 $('#fp-interact').onclick=()=>inspectObject(centerObject());
 for(const b of document.querySelectorAll('[data-move]')){b.onpointerdown=e=>{e.preventDefault();held.add(b.dataset.move);b.setPointerCapture(e.pointerId)};for(const type of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(type,()=>held.delete(b.dataset.move));}
 const keyMap={KeyW:'forward',ArrowUp:'forward',KeyS:'back',ArrowDown:'back',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
-window.addEventListener('keydown',e=>{if(!firstPerson||$('#game').hidden||$('#modal').open||$('#notebook').open||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)&&e.target!==document.body)return;if(e.code==='Escape'){releaseControls();return}if(fieldMenu)return;if(keyMap[e.code]){e.preventDefault();held.add(keyMap[e.code])}if(e.code==='KeyE'&&!e.repeat){e.preventDefault();inspectObject(centerObject())}});
+window.addEventListener('keydown',e=>{if(!firstPerson||$('#game').hidden||$('#modal').open||$('#notebook').open||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)&&e.target!==document.body)return;if(e.code==='Escape'){releaseControls();return}if(fieldMenu)return;if(keyMap[e.code]&&(!desktopPointer()||document.pointerLockElement===renderer.domElement)){e.preventDefault();held.add(keyMap[e.code])}if(e.code==='KeyE'&&!e.repeat&&(!desktopPointer()||document.pointerLockElement===renderer.domElement)){e.preventDefault();inspectObject(centerObject())}});
 document.addEventListener('pointerlockchange',()=>{releaseDrag();if(firstPerson)lookHelp()});
 function releaseDrag(){fallbackPointer=null;drag=null;held.clear();}
 document.addEventListener('pointerlockerror',()=>{pointerLockUnavailable=true;releaseDrag();if(firstPerson)lookHelp()});
@@ -139,7 +157,7 @@ document.addEventListener('fullscreenchange',()=>{releaseControls();resize()});
 new ResizeObserver(()=>{releaseDrag();resize()}).observe($('#viewport'));
 window.addEventListener('keyup',e=>{if(keyMap[e.code])held.delete(keyMap[e.code])});window.addEventListener('blur',releaseControls);document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseControls()});
 function syncFirstPersonCamera(){camera.position.set(player.x,2.9,player.z);camera.rotation.order='YXZ';camera.rotation.set(player.pitch,player.yaw,0);camera.updateMatrixWorld(true);torch.position.copy(camera.position);}
-const target=new T.Vector3(0,1,0);function frame(now=0){requestAnimationFrame(frame);const dt=Math.min(.05,Math.max(0,(now-lastFrame)/1000));lastFrame=now;if($('#game').hidden)return;if(firstPerson){if(!$('#modal').open&&!$('#notebook').open&&!fieldMenu){const oldX=player.x,oldZ=player.z;movePlayer(player,Number(held.has('forward'))-Number(held.has('back')),Number(held.has('right'))-Number(held.has('left')),dt);if(player.x!==oldX||player.z!==oldZ)forceRender=true}syncFirstPersonCamera();const o=$('#modal').open?null:centerObject();$('#fp-target').textContent=o?o.userData.name:'';$('#fp-interact').textContent=o?'조사하기 · E':'가까이 다가가세요';$('#fp-interact').disabled=!o;positionMarkers();if(forceRender||renderer.shadowMap.needsUpdate){renderer.render(scene,camera);forceRender=false}return;}angle+=(targetAngle-angle)*.045;const radius=Math.max(17,18/Math.max(.4,camera.aspect));let desired=new T.Vector3(Math.sin(.65+angle)*radius,radius*.66,Math.cos(.65+angle)*radius);let look=new T.Vector3(0,.8,0);if(zoom){look=zoom.at.clone();desired=look.clone().add(new T.Vector3(5,4,7))}camera.position.lerp(desired,.045);target.lerp(look,.055);camera.lookAt(target);positionMarkers();if(forceRender||camera.position.distanceTo(desired)>.002||target.distanceTo(look)>.002||renderer.shadowMap.needsUpdate){renderer.render(scene,camera);forceRender=false}}frame();save();$('#world-loading').remove();
+const target=new T.Vector3(0,1,0);function frame(now=0){requestAnimationFrame(frame);const dt=Math.min(.05,Math.max(0,(now-lastFrame)/1000));lastFrame=now;if($('#game').hidden)return;if(firstPerson){if(!$('#modal').open&&!$('#notebook').open&&!fieldMenu&&(!desktopPointer()||document.pointerLockElement===renderer.domElement)){const oldX=player.x,oldZ=player.z;movePlayer(player,Number(held.has('forward'))-Number(held.has('back')),Number(held.has('right'))-Number(held.has('left')),dt);if(player.x!==oldX||player.z!==oldZ)forceRender=true}syncFirstPersonCamera();const o=$('#modal').open?null:centerObject();$('#fp-target').textContent=o?o.userData.name:'';$('#fp-interact').textContent=o?'조사하기 · E':'가까이 다가가세요';$('#fp-interact').disabled=!o;positionMarkers();if(forceRender||renderer.shadowMap.needsUpdate){renderer.render(scene,camera);forceRender=false}return;}angle+=(targetAngle-angle)*.045;const radius=Math.max(17,18/Math.max(.4,camera.aspect));let desired=new T.Vector3(Math.sin(.65+angle)*radius,radius*.66,Math.cos(.65+angle)*radius);let look=new T.Vector3(0,.8,0);if(zoom){look=zoom.at.clone();desired=look.clone().add(new T.Vector3(5,4,7))}camera.position.lerp(desired,.045);target.lerp(look,.055);camera.lookAt(target);positionMarkers();if(forceRender||camera.position.distanceTo(desired)>.002||target.distanceTo(look)>.002||renderer.shadowMap.needsUpdate){renderer.render(scene,camera);forceRender=false}}frame();save();$('#world-loading').remove();
 // Restore evidence to the notebook when revisiting the room.
 if(done('notebook'))evidence(['log']);if(done('recomb'))evidence([],['recomb']);if(has('sample'))evidence(['culture']);if(done('culture'))evidence([],['culture']);if(done('sequence'))evidence(['analysis']);if(done('interpret'))evidence([],['dna']);if(done('terminal'))evidence(['access','receipt']);
 
@@ -149,8 +167,8 @@ window.addEventListener('reset-world',()=>{s={items:[],done:[],selected:null};dr
 // The map is the entry point; the investigation fills the page only on entry.
 function closeFieldMenu(){fieldMenu=false;$('#game').classList.remove('field-menu');}
 function showHub(){releaseControls();closeFieldMenu();if(firstPerson)togglePerspective();$('#game').classList.add('hub-mode');resize();}
-function enterField(){closeFieldMenu();$('#game').classList.remove('hub-mode');if(!firstPerson)togglePerspective();resize();forceRender=true;}
-function toggleFieldMenu(){releaseControls();fieldMenu=!fieldMenu;$('#game').classList.toggle('field-menu',fieldMenu);}
+function enterField(){closeFieldMenu();$('#game').classList.remove('hub-mode');if(!firstPerson)togglePerspective();resize();forceRender=true;startFpsLook();}
+function toggleFieldMenu(){releaseControls();fieldMenu=!fieldMenu;$('#game').classList.toggle('field-menu',fieldMenu);lookHelp();if(!fieldMenu)startFpsLook();}
 const fieldBar=document.createElement('div');fieldBar.className='field-bar';fieldBar.innerHTML='<button id="field-exit">← 연구소 지도</button><span>배양실 02 · 현장 조사</span><button id="field-notes">수첩 [N]</button><button id="field-menu">도구·자료 [I]</button>';$('#game').appendChild(fieldBar);
 $('#field-notes').onclick=()=>openNotes('board');$('#field-exit').onclick=showHub;$('#field-menu').onclick=toggleFieldMenu;
 function labMenu(){modal('분석실 · 검사 장비','<p>현장에서 확보한 시료를 검사합니다. 시료 튜브와 증폭 DNA는 아래 버튼에서 장비에 넣을 수 있습니다.</p>',[['시료를 PCR 장비에 넣기',()=>{s.selected=has('sample')?'sample':null;save();inspectPcr()}],['증폭 DNA를 서열 분석기에 넣기',()=>{s.selected=has('amp')?'amp':null;save();inspectSequence()}],['확보한 검사 기록',()=>{$('#modal').close();openNotes('board')}]]);}
@@ -159,9 +177,19 @@ window.addEventListener('keydown',e=>{if(!firstPerson||$('#game').hidden||$('#mo
 showHub();
 
 // A native dialog keeps focus inside the notebook and the scene visible behind it.
-$('#notebook').addEventListener('close',releaseControls);
+$('#notebook').addEventListener('close',lookHelp);
+$('#return-room').addEventListener('click',()=>startFpsLook());
+$('#close').addEventListener('click',()=>startFpsLook());
+$('#modal').addEventListener('close',lookHelp);
 window.addEventListener('keydown',e=>{
  if(e.code!=='KeyN'||e.repeat||$('#modal').open||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.target.isContentEditable)return;
  e.preventDefault();
- if($('#notebook').open)$('#notebook').close();else openNotes('board');
+ if($('#notebook').open){$('#notebook').close();startFpsLook()}else openNotes('board');
 });
+
+const lockGate=document.createElement('div');lockGate.id='fps-lock-gate';lockGate.hidden=true;
+lockGate.innerHTML='<div class="fps-lock-card"><h2 id="fps-lock-title">FPS 시선 조작</h2><p id="fps-lock-description"></p><button id="fps-start" class="primary">FPS 시선 시작</button><a id="fps-external" href="https://siballllllll.github.io/Crime/" target="_blank" rel="noopener" hidden>새 탭에서 게임 열기 ↗</a><label for="fps-sensitivity">마우스 감도 <output id="fps-sensitivity-value"></output></label><input id="fps-sensitivity" type="range" min="25" max="200" step="5"><button id="fps-back">연구소 지도로 돌아가기</button></div>';
+$('#viewport').appendChild(lockGate);
+$('#fps-start').onclick=startFpsLook;$('#fps-back').onclick=showHub;
+$('#fps-sensitivity').value=prefs.sensitivity;$('#fps-sensitivity-value').textContent=prefs.sensitivity+'%';
+$('#fps-sensitivity').oninput=e=>{prefs.sensitivity=Number(e.target.value);$('#fps-sensitivity-value').textContent=prefs.sensitivity+'%';localStorage.setItem('bio-display-v1',JSON.stringify(prefs))};
