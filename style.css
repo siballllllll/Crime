@@ -76,3 +76,5 @@ body.immersive:has(#notebook){overflow:hidden}
 .fps-lock-card input{width:100%;margin:14px 0}
 .first-person:not(.fps-locked) .fp-reticle{visibility:hidden}
 @media(pointer:coarse){.first-person:not(.fps-locked) .fp-reticle{visibility:visible}}
+.field-bar .field-exit-hint{font-size:14px;color:#e2e9e6;background:#10232ed9;border:1px solid #617b85;border-radius:5px;padding:10px 12px}
+@media(max-width:700px){.field-bar .field-exit-hint{font-size:11px;padding:8px}.field-bar>span:not(.field-exit-hint){display:none}}
