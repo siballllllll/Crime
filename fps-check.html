@@ -1,0 +1,31 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>독립 FPS · BIO CASEFILES</title><style>
+*{box-sizing:border-box}body{margin:0;background:#101c28;color:#eff2f4;font:15px system-ui;overflow:hidden}canvas{display:block;width:100vw;height:100dvh}#panel{position:fixed;left:20px;top:20px;width:min(440px,calc(100vw - 40px));max-height:85dvh;overflow:auto;padding:22px;background:#10232fee;border:1px solid #8ba5b0;border-radius:12px}h1{font-size:22px;margin:0 0 12px}p{line-height:1.7}button,a{display:inline-block;padding:12px;margin:5px 4px 5px 0;color:#f1e7ce;background:#284454;border:1px solid #9aa99a;border-radius:5px;cursor:pointer;font:inherit}#reticle{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;color:white;text-shadow:0 1px 2px black;font-size:24px}#info{position:fixed;bottom:12px;left:12px;padding:10px;background:#0a1b29dd;pointer-events:none;font-size:13px}#result{white-space:pre-wrap;background:#091722;padding:12px;border-radius:5px}body.captured #panel{display:none}body.captured,body.captured canvas{cursor:none}label{display:block;margin:14px 0}input{width:100%}[hidden]{display:none!important}
+</style></head><body><div id="panel"><h1>독립 FPS 실행 화면</h1><p>게임 UI 없이 상대 마우스 입력만 사용하는 3D 공간입니다. 연결되면 커서가 사라지고 마우스 이동만큼 시선이 회전합니다.</p><button data-mode="standard">캔버스로 시작</button><button data-mode="body">화면 전체로 시작</button><button data-mode="fullscreen">전체화면으로 시작</button><button data-mode="raw">원시 입력으로 시작</button><label>감도 <output id="sensitivity">100%</output><input id="sense" type="range" min="25" max="200" value="100"></label><div id="result" role="status">연결 방식을 선택하세요.</div><p>WASD: 이동 · Esc: 마우스 해제</p><a href="./">게임으로 돌아가기</a></div><div id="reticle" hidden>＋</div><div id="info">상대 마우스 입력 대기</div>
+<script type="module">
+import * as T from './vendor/three.module.js';
+import {requestFpsCapture} from './fps-input.js?v=1';
+const $=s=>document.querySelector(s),scene=new T.Scene();scene.background=new T.Color('#152332');
+const camera=new T.PerspectiveCamera(70,innerWidth/innerHeight,.1,100);camera.rotation.order='YXZ';camera.position.set(0,1.7,6);
+const renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);document.body.prepend(renderer.domElement);
+scene.add(new T.HemisphereLight('#d8e8ff','#293c27',3));
+const grid=new T.GridHelper(40,40,'#8bafbb','#344c5b');scene.add(grid);
+for(let i=0;i<16;i++){const mesh=new T.Mesh(new T.BoxGeometry(1.2,1+i%3,.8),new T.MeshStandardMaterial({color:['#6d9aaf','#b79966','#689583','#9079a3'][i%4]}));const angle=i/16*Math.PI*2;mesh.position.set(Math.sin(angle)*10,(1+i%3)/2,Math.cos(angle)*10);scene.add(mesh)}
+let pending=false,count=0,total=0,last=performance.now(),dirty=true;const keys=new Set();
+const locked=()=>document.pointerLockElement===renderer.domElement||document.pointerLockElement===document.body;
+function state(){document.body.classList.toggle('captured',locked());$('#reticle').hidden=!locked();keys.clear();if(locked())$('#result').textContent='연결 성공';dirty=true}
+document.addEventListener('pointerlockchange',state);
+document.addEventListener('mousemove',e=>{if(!locked())return;const gain=Number($('#sense').value)/100*.002;camera.rotation.y-=e.movementX*gain;camera.rotation.x=Math.max(-1.4,Math.min(1.4,camera.rotation.x-e.movementY*gain));count++;total+=Math.abs(e.movementX);dirty=true});
+for(const button of document.querySelectorAll('[data-mode]'))button.onclick=async()=>{
+ if(pending)return;pending=true;$('#result').textContent='연결 요청 중…';
+ const mode=button.dataset.mode,target=mode==='standard'?renderer.domElement:document.body;target.tabIndex=-1;
+ try{await requestFpsCapture(target,{fullscreen:mode==='fullscreen',raw:mode==='raw'});state()}
+ catch(error){$('#result').textContent='연결 실패 · '+mode+'\n'+error.name+': '+error.message+'\n이 화면에서도 실패하면 게임 UI를 변경하는 것만으로 해결되지 않습니다.'}
+ finally{pending=false}
+};
+$('#sense').oninput=()=>$('#sensitivity').textContent=$('#sense').value+'%';
+window.addEventListener('keydown',e=>{if(locked()&&['KeyW','KeyA','KeyS','KeyD'].includes(e.code)){e.preventDefault();keys.add(e.code)}});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);dirty=true});
+function frame(now){requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000);last=now;if(locked()){const f=Number(keys.has('KeyW'))-Number(keys.has('KeyS')),r=Number(keys.has('KeyD'))-Number(keys.has('KeyA'));if(f||r){const d=3*dt/(Math.hypot(f,r)||1);camera.position.x+=(-Math.sin(camera.rotation.y)*f+Math.cos(camera.rotation.y)*r)*d;camera.position.z+=(-Math.cos(camera.rotation.y)*f-Math.sin(camera.rotation.y)*r)*d;dirty=true}}
+if(dirty){renderer.render(scene,camera);$('#info').textContent=(locked()?'연결됨':'입력 대기')+' · 상대 이동 '+count+'회 · 누적 수평 이동 '+total+' · 회전 '+Math.round(camera.rotation.y*180/Math.PI)+'°';dirty=false}}
+requestAnimationFrame(frame);
+</script></body></html>

@@ -88,3 +88,4 @@ body.immersive:has(#notebook){overflow:hidden}
 .fps-control-version{display:block;color:#c6d6de;font-size:12px;margin-bottom:10px}
 #fps-click-status:empty{display:none}
 #fps-click-status{padding:8px 10px;background:#244237;border:1px solid #8aa98c;border-radius:5px;color:#edf4d8}
+.fps-alternatives{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}.fps-alternatives button,.fps-alternatives a{font-size:13px;margin:0;padding:10px 6px}.fps-lock-card{max-height:calc(100dvh - 40px);overflow-y:auto}
