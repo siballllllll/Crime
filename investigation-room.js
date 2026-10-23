@@ -1,4 +1,5 @@
-import {addLabFittings} from './lab-fittings.js?v=1';
+import {addLabDetail} from './lab-detail.js?v=1';
+import {addLabFittings} from './lab-fittings.js?v=2';
 import * as T from './vendor/three.module.js';
 // Full-size first-person room; decorative props stay inside collision footprints.
 export function buildInvestigationRoom({scene,renderer,object,actions,leave}){
@@ -7,11 +8,12 @@ export function buildInvestigationRoom({scene,renderer,object,actions,leave}){
  const wall=new T.MeshStandardMaterial({map:texture('#d4d7d0'),roughness:.9});const floor=new T.MeshStandardMaterial({map:texture('#bab9ad',true),roughness:.52});floor.map.wrapS=floor.map.wrapT=T.RepeatWrapping;floor.map.repeat.set(9,7);
  const steel=new T.MeshStandardMaterial({color:'#a7b4b5',metalness:.65,roughness:.32}),dark=new T.MeshStandardMaterial({color:'#263c46',roughness:.6}),top=new T.MeshStandardMaterial({color:'#e0e3db',roughness:.36}),wood=new T.MeshStandardMaterial({map:texture('#e1e3da'),roughness:.5}),worktop=new T.MeshStandardMaterial({color:'#20282c',roughness:.32,metalness:.12});
  const glass=new T.MeshPhysicalMaterial({color:'#bce4df',transparent:true,opacity:.2,roughness:.08,metalness:.08,depthWrite:false,side:T.DoubleSide});
+ const signTextures=new Map();
  const cache=new Map();const material=c=>typeof c==='string'?(cache.get(c)||cache.set(c,new T.MeshStandardMaterial({color:c,roughness:.65})).get(c)):c;
  function box(x,y,z,w,h,d,m,parent=scene){const a=new T.Mesh(new T.BoxGeometry(w,h,d),material(m));a.position.set(x,y,z);a.castShadow=a.receiveShadow=true;parent.add(a);return a}
  function cyl(x,y,z,r,h,m,parent=scene){const a=new T.Mesh(new T.CylinderGeometry(r,r,h,24),material(m));a.position.set(x,y,z);a.castShadow=a.receiveShadow=true;parent.add(a);return a}
  function sign(words,x,y,z,w=2.6,h=.5,parent=scene,color='#d8e4df',bg='#20343e'){
-  const c=document.createElement('canvas');c.width=1024;c.height=256;const t=c.getContext('2d');t.fillStyle=bg;t.fillRect(0,0,1024,256);t.fillStyle=color;t.fillRect(0,0,12,256);t.font='600 64px sans-serif';t.textBaseline='middle';t.textAlign='center';t.fillText(words,512,128,970);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=4;const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map:tex}));mesh.position.set(x,y,z);parent.add(mesh);return mesh;
+  const key=words+'|'+color+'|'+bg;let tex=signTextures.get(key);if(!tex){const c=document.createElement('canvas');c.width=1024;c.height=256;const t=c.getContext('2d');t.fillStyle=bg;t.fillRect(0,0,1024,256);t.fillStyle=color;t.fillRect(0,0,12,256);t.font='600 64px sans-serif';t.textBaseline='middle';t.textAlign='center';t.fillText(words,512,128,970);tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;tex.anisotropy=4;signTextures.set(key,tex)}const mesh=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map:tex}));mesh.position.set(x,y,z);parent.add(mesh);return mesh;
  }
  function table(x,z,w=2.4,d=1.3){
   box(x,.48,z,w,.87,d,wood);box(x,.95,z,w+.1,.08,d+.08,worktop);
@@ -61,6 +63,7 @@ export function buildInvestigationRoom({scene,renderer,object,actions,leave}){
  const lamp=new T.SpotLight('#ffe0b4',18,9,.7,.6,1.5);lamp.position.set(-4.4,3.3,-3);lamp.target.position.set(-4.4,.9,-4.2);lamp.castShadow=true;lamp.shadow.mapSize.set(1024,1024);lamp.shadow.bias=-.001;scene.add(lamp,lamp.target);
  const exitDoor=new T.Group();exitDoor.userData={name:'출입문 · 연결 복도로 나가기',id:'exit',fn:leave};firstWalls.add(exitDoor);box(0,1.45,6.8,1.7,2.9,.12,dark,exitDoor);for(const x of [-.92,.92])box(x,1.5,6.73,.12,3,.2,steel,exitDoor);box(0,3,6.73,1.96,.12,.2,steel,exitDoor);box(.65,1.2,6.69,.06,.34,.07,steel,exitDoor);sign('EXIT / 연결 복도',0,2.55,6.7,1.4,.3,exitDoor,'#deeddf','#355e52').rotation.y=Math.PI;
  addLabFittings({scene,box,cyl,sign,steel,top,dark,glass,worktop});
+ addLabDetail({scene,box,cyl,sign,steel,top,dark,glass,worktop,pcr,sequencer});
  // Rounded equipment shells and supported workstation signs retain real-world proportions.
  for(const root of [pcr,sequencer,drawer])root.traverse(o=>{
   if(o.geometry?.type!=='BoxGeometry')return;const {width:w,height:h,depth:d}=o.geometry.parameters;if(w<.5||h<.15||d<.3)return;

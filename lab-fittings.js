@@ -40,5 +40,5 @@ export function addLabFittings({scene,box,cyl,sign,steel,top,dark,glass,worktop}
   for(let i=0;i<5;i++){const a=i/5*Math.PI*2;const leg=box(x+Math.cos(a)*.18,.1,z+Math.sin(a)*.18,.38,.035,.045,steel);leg.rotation.y=-a;const wheel=cyl(x+Math.cos(a)*.34,.06,z+Math.sin(a)*.34,.045,.04,rubber);wheel.rotation.z=Math.PI/2}
   box(x,.84,z-.22,.035,.4,.035,steel);const back=box(x,1.03,z-.25,.48,.27,.07,rubber);back.rotation.x=-.1;
  }
- stool(-1.5,-2.3);stool(7.3,2.8);
+ stool(-2.6,0);stool(7.3,2.8);
 }

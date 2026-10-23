@@ -1,10 +1,10 @@
 import {requestFpsCapture} from './fps-input.js?v=1';
-import {buildInvestigationRoom} from './investigation-room.js?v=2';
+import {buildInvestigationRoom} from './investigation-room.js?v=3';
 import {createInteractionFeedback} from './interaction-feedback.js?v=1';
 import {createHub} from './spatial-hub.js?v=7';
 import * as T from './vendor/three.module.js';
 import {illustration} from './illustrations.js';
-import {START,movePlayer} from './navigation.js?v=3';
+import {START,movePlayer} from './navigation.js?v=4';
 const desktopPointer=()=>matchMedia('(pointer:fine)').matches;let fallbackPointer=null,pointerLockUnavailable=false;
 let fieldMenu=false;let firstPerson=false;const player={...START};const held=new Set();let lastFrame=0,drag=null,suppressClick=false;
 function releaseControls(){fallbackPointer=null;held.clear();drag=null;if(document.pointerLockElement)document.exitPointerLock();}
