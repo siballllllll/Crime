@@ -18,8 +18,14 @@ export function addLabFittings({scene,box,cyl,sign,steel,top,dark,glass,worktop}
   for(let dx=-w/2+.3;dx<w/2;dx+=.9){box(x+dx,1.28,z+.05,.16,.14,.014,top);for(const d of [-.035,.035])cyl(x+dx+d,1.28,z+.065,.012,.008,dark).rotation.x=Math.PI/2;}
  }
  shelf(-4.4,-4.72,5.5);shelf(4.4,-4.62,2.85);
- // Wall-mounted storage and boxed consumables behind the analysis station.
- for(const x of [5,6.45]){box(x,2.65,.53,1.35,.7,.4,plastic);box(x,2.65,.75,.012,.65,.025,'#809497');for(const dx of [-.09,.09])box(x+dx,2.6,.78,.022,.2,.03,steel)}
+ // Cabinets sit against the east wall, facing the room, with a mounting rail.
+ const storage=new T.Group();storage.position.set(8.65,2.65,1.2);storage.rotation.y=-Math.PI/2;scene.add(storage);
+ box(0,0,-.19,2.85,.08,.06,steel,storage);
+ for(const x of [-.72,.72]){
+  box(x,0,0,1.35,.7,.4,plastic,storage);
+  for(const dx of [-.335,.335])box(x+dx,0,.215,.655,.65,.035,plastic,storage);
+  for(const dx of [-.09,.09])box(x+dx,-.05,.26,.022,.2,.035,steel,storage);
+ }
  function pipettes(x,z){cyl(x,1.02,z,.17,.04,plastic);cyl(x,1.3,z,.018,.54,steel);cyl(x,1.56,z,.19,.035,plastic);
   for(let i=0;i<5;i++){const a=i/5*Math.PI*2,px=x+Math.cos(a)*.13,pz=z+Math.sin(a)*.13;cyl(px,1.36,pz,.025,.28,plastic);cyl(px,1.18,pz,.009,.12,steel);cyl(px,1.52,pz,.022,.04,i%2?blue:dark)}
  }

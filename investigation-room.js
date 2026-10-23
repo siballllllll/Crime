@@ -1,5 +1,5 @@
 import {addLabDetail} from './lab-detail.js?v=2';
-import {addLabFittings} from './lab-fittings.js?v=2';
+import {addLabFittings} from './lab-fittings.js?v=3';
 import * as T from './vendor/three.module.js';
 // Full-size first-person room; decorative props stay inside collision footprints.
 export function buildInvestigationRoom({scene,renderer,object,actions,leave}){
@@ -51,7 +51,12 @@ export function buildInvestigationRoom({scene,renderer,object,actions,leave}){
  for(let i=0;i<3;i++){const x=(i-1)*.45;cyl(x,.03,0,.15,.08,'#b5ad7a',culture);const jar=cyl(x,.17,0,.17,.4,glass,culture);jar.castShadow=false;cyl(x,.39,0,.18,.045,steel,culture);box(x,.17,0,.02,.25,.02,'#3c6b45',culture);for(let j=0;j<3;j++){const leaf=new T.Mesh(new T.SphereGeometry(.08,10,6),material('#73915c'));leaf.scale.set(1,.18,.5);leaf.position.set(x+(j%2?.06:-.06),.13+j*.07,0);leaf.rotation.z=j%2?.4:-.4;culture.add(leaf)}sign('B-'+(10+i),x,.05,.171,.14,.09,culture)}
  const pcr=object('PCR 증폭 장비',4.4,1.22,-3.9,actions.pcr);box(0,0,0,1.1,.45,.8,top,pcr);box(0,.25,-.13,.95,.08,.46,dark,pcr);sign('PCR / STANDBY',0,.03,.411,.65,.18,pcr,'#9edbcb','#10282e');for(let i=0;i<8;i++)box(-.46+i*.045,-.12,.412,.018,.08,.01,dark,pcr);cyl(.4,.02,.42,.045,.035,'#b5cdbf',pcr).rotation.x=Math.PI/2;
  const cabinet=object('시료 보관함',-7.8,1.1,-5.35,actions.cabinet);box(0,0,0,1.25,2.2,1.05,top,cabinet);const cabinetDoor=new T.Group();cabinetDoor.position.set(-.56,0,.54);cabinet.add(cabinetDoor);box(.56,0,0,1.12,1.95,.06,dark,cabinetDoor);box(.98,0,.06,.04,.48,.05,steel,cabinetDoor);sign('B-12  시료 보관',.56,.7,.04,.92,.22,cabinetDoor);sign('시료 보관 구역',-7.75,2.7,-6.7,2,.35);
- const terminal=object('출입 기록 단말',-7.5,1.3,3,actions.terminal);box(0,-.7,0,.45,1.2,.4,dark,terminal);box(0,0,0,.8,.58,.25,steel,terminal);sign('ACCESS / 카드 인증',0,.03,.135,.69,.38,terminal,'#b6dce1','#162e39');box(0,-.36,.1,.4,.07,.12,dark,terminal);
+ const terminal=object('출입 기록 단말',2.1,1.45,6.78,actions.terminal);terminal.rotation.y=Math.PI;
+ box(0,0,-.04,.9,.85,.08,dark,terminal);box(0,.08,.06,.8,.58,.16,steel,terminal);
+ box(0,.11,.146,.69,.38,.008,'#162e39',terminal);sign('ACCESS / 카드 인증',0,.15,.153,.65,.15,terminal,'#b6dce1','#162e39');
+ sign('STAFF · RECORDS',0,-.01,.153,.54,.1,terminal,'#8ab9bc','#162e39');
+ box(0,-.29,.08,.4,.1,.13,dark,terminal);sign('출입 · 반출 기록',0,.61,.04,1.2,.23,terminal);
+
  const sequencer=object('염기서열 분석기',5.7,1.27,1.2,actions.sequencer);box(0,0,0,1.35,.55,.9,top,sequencer);box(-.4,.05,.46,.4,.3,.02,dark,sequencer);sign('SEQUENCE',.22,.05,.465,.64,.22,sequencer,'#b4d8da','#183442');for(let i=0;i<9;i++)box(-.4+i*.1,-.2,.46,.025,.06,.01,dark,sequencer);
  tent('01',-6,-3.65);tent('02',-2.5,-3.65);
  // Small props stay on worktops, leaving a wide central circulation space.
