@@ -97,3 +97,41 @@ body.immersive:has(#notebook){overflow:hidden}
 .case-questions a{color:#e9d49b;display:inline-block;margin:12px}.case-questions p,.reasoning-panel>p{color:#d0dee1}
 .evidence-purpose{border-top:1px solid #58717a;padding-top:14px;line-height:1.7}.evidence-purpose dt{font-weight:700;color:#f0d99e;margin-top:12px}.evidence-purpose dd{margin:4px 0 0;color:#e2ebed}
 .comparison{margin:14px 0;border:1px solid #58717a;border-radius:8px;padding:16px;background:#10242d}.comparison summary{cursor:pointer;font-weight:700;font-size:17px;color:#f0dfb9}.comparison blockquote{margin:14px 0;padding:12px 16px;border-left:3px solid #a6c9d7;background:#213b46;color:#f1f5f5}.comparison label{display:block;margin-top:14px}.comparison select,.comparison textarea{width:100%;box-sizing:border-box}.comparison-source{white-space:pre-line;background:#263e48;padding:14px;border-radius:6px;color:#f1f4ef;line-height:1.8}.comparison textarea{min-height:90px}#statement-comparison{scroll-margin-top:16px}
+/* A focused comparison desk: one person, one source, no surrounding card wall. */
+#notebook:has(.board-workspace){width:min(1280px,calc(100vw - 32px));max-width:1280px}
+#notebook .board-workspace{grid-template-columns:minmax(0,1fr)}
+.board-workspace>aside{display:none}
+.board-workspace #content{min-width:0;font-size:16px}
+.board-workspace .section-top{margin-bottom:12px}.board-workspace .section-top h2{font-size:22px}.board-workspace .tag{font-size:14px;color:#d1dde2;letter-spacing:0}
+.board-view-switch{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid #5b727e;padding-bottom:12px}
+.board-view-switch button{font-size:16px;font-weight:700;background:#20343f;border-color:#627d89;padding:12px 20px}
+.board-view-switch button[aria-pressed=true]{background:#edd6a3;color:#18242d;border-color:#edd6a3}
+.person-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.person-picker button{text-align:left;padding:12px 16px;background:#1c303d;border:1px solid #627f90;border-radius:8px}
+.person-picker b{display:block;font-size:19px;color:#f5f7f8}.person-picker span{display:block;font-size:14px;color:#c8d8e1;margin-top:4px}
+.person-picker button[aria-pressed=true]{background:#365366;border:2px solid #f0d69b;padding:11px 15px;box-shadow:inset 0 -3px #f0d69b}
+.comparison-columns{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:18px;align-items:stretch}
+.statement-pane,.source-pane{min-width:0;padding:22px;border-radius:10px;border:1px solid #718794;background:#20333f}
+.statement-pane{border-top:4px solid #e0c18a}.source-pane{border-top:4px solid #92c9e4}
+.compare-label{font-size:14px;font-weight:700;color:#f0d69b}.source-pane .compare-label{color:#b1def4}
+.comparison-desk h3{font-size:22px;margin:16px 0;color:#fff;line-height:1.5}
+.comparison-desk blockquote{font-size:21px;line-height:1.8;margin:18px 0 24px;padding:0;color:#fff;font-weight:500}
+.comparison-desk p{font-size:17px;line-height:1.8;color:#edf3f7}
+.source-picker{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 18px}.source-picker button{font-size:15px;color:#eef4f7;border:1px solid #7895a5;background:#162833;padding:9px 12px;line-height:1.4}
+.source-picker button[aria-pressed=true]{color:#102b3c;background:#b4dcee;border-color:#b4dcee;font-weight:700;box-shadow:inset 0 -3px #62accb}
+.comparison-desk .comparison-source{background:#10222e;margin:0;padding:18px;white-space:pre-line;font-size:18px;line-height:1.85;color:#fff;border:1px solid #526e7e;border-radius:6px;overflow-wrap:anywhere}
+.source-placeholder{border:1px dashed #7694a4;border-radius:6px;padding:22px;color:#edf3f7}.source-placeholder b{font-size:20px}.source-placeholder p{margin-bottom:0}
+.confirmed-context,.source-help{margin-top:18px;border-top:1px solid #526b7b;padding-top:14px}.comparison-desk summary{font-size:15px;color:#e1eaf0;cursor:pointer;line-height:1.7}.comparison-desk details p{font-size:16px}
+.comparison-verdict{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:18px;margin-top:18px;padding:18px 22px;background:#243e4a;border:1px solid #698492;border-radius:10px}
+.comparison-verdict label{font-size:16px;color:#f4dfb2;font-weight:700;margin:0 0 10px}.comparison-verdict select,.comparison-verdict textarea{font-size:17px;background:#10222e;color:#fff;border-color:#8ba2ae;min-height:50px}.comparison-verdict textarea{height:85px;min-height:85px}
+.comparison-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0}.comparison-footer span{font-size:14px;color:#cedde5}.comparison-footer button{font-size:16px;white-space:nowrap;background:#304958;border-color:#7893a1}
+.board-workspace .record-body{font-size:17px;line-height:1.85;color:#f1f4f5}.board-workspace .record-meta{font-size:14px}.board-workspace .evidence-card h3{font-size:21px}.board-workspace .evidence-purpose{font-size:16px}.board-workspace .student-hypothesis label,.board-workspace .student-hypothesis select,.board-workspace .student-hypothesis textarea{font-size:16px}.board-workspace .student-hypothesis small{font-size:13px;color:#bfced6}.board-workspace .board-filters button{font-size:15px}.board-workspace .board-intro{font-size:16px;color:#d8e4e9}
+@media(max-width:760px){.comparison-columns,.comparison-verdict{grid-template-columns:1fr}.person-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.statement-pane,.source-pane{padding:16px}.comparison-desk blockquote{font-size:19px}.board-view-switch button{padding:10px;font-size:15px}.comparison-footer{flex-wrap:wrap}.board-workspace .section-top{flex-wrap:wrap;gap:8px}}
+#notebook:has(.board-workspace){height:calc(100dvh - 40px);max-height:calc(100dvh - 40px)}
+#notebook:has(.board-workspace) .notebook-heading{height:66px;padding-top:8px;padding-bottom:8px}
+#notebook:has(.board-workspace) .notebook-kicker{display:none}
+#notebook:has(.board-workspace) .intro{display:none}
+.access-comparison{border-collapse:collapse;width:100%;font-size:18px;background:#10222e;color:#fff;font-variant-numeric:tabular-nums}
+.access-comparison caption{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.access-comparison th,.access-comparison td{padding:11px 14px;text-align:left;border-bottom:1px solid #597584}
+.access-comparison thead th{font-size:15px;color:#c1e2f3;background:#304d5e}.access-comparison tbody th{font-weight:600}.access-comparison tbody tr:nth-child(even){background:#1a303d}
