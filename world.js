@@ -1,5 +1,5 @@
 import {requestFpsCapture} from './fps-input.js?v=1';
-import {buildInvestigationRoom} from './investigation-room.js?v=3';
+import {buildInvestigationRoom} from './investigation-room.js?v=4';
 import {createInteractionFeedback} from './interaction-feedback.js?v=1';
 import {createHub} from './spatial-hub.js?v=7';
 import * as T from './vendor/three.module.js';

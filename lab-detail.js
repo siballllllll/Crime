@@ -45,4 +45,24 @@ export function addLabDetail({scene,box,cyl,sign,steel,top,dark,glass,worktop,pc
  for(let i=0;i<6;i++){const tube=cyl(-.35+i*.14,.26,-.05,.035,.05,steel,pcr);tube.material=steel;}
  // Slightly brushed stainless steel, instead of uniform flat-color metal.
  const c=document.createElement('canvas');c.width=c.height=128;const ct=c.getContext('2d');ct.fillStyle='#aeb8b9';ct.fillRect(0,0,128,128);for(let i=0;i<128;i++){ct.fillStyle=i%3?'#e7eeed12':'#273a4112';ct.fillRect(0,i,128,1)}const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;steel.map=tex;steel.needsUpdate=true;
+ // Epoxy worktops: subtle wear and varying roughness catch light at close range.
+ let grainSeed=93;const random=()=>((grainSeed=grainSeed*16807%2147483647)-1)/2147483646;
+ const surface=document.createElement('canvas');surface.width=surface.height=512;const sc=surface.getContext('2d');sc.fillStyle='#252e32';sc.fillRect(0,0,512,512);
+ const rough=document.createElement('canvas');rough.width=rough.height=512;const rc=rough.getContext('2d');rc.fillStyle='#777777';rc.fillRect(0,0,512,512);
+ for(let i=0;i<14000;i++){const x=random()*512,y=random()*512;sc.fillStyle=i%2?'#c7d8d509':'#07111a0a';sc.fillRect(x,y,1,1);rc.fillStyle=i%2?'#ffffff18':'#00000012';rc.fillRect(x,y,2,2)}
+ for(let i=0;i<36;i++){const x=random()*512,y=random()*512,dx=8+random()*35;sc.strokeStyle='#bbc9cd0c';sc.beginPath();sc.moveTo(x,y);sc.lineTo(x+dx,y+2);sc.stroke();rc.strokeStyle='#ffffff16';rc.beginPath();rc.moveTo(x,y);rc.lineTo(x+dx,y+2);rc.stroke()}
+ worktop.map=new T.CanvasTexture(surface);worktop.map.colorSpace=T.SRGBColorSpace;worktop.map.anisotropy=4;worktop.color.set('#ffffff');worktop.roughnessMap=new T.CanvasTexture(rough);worktop.roughness=.85;worktop.needsUpdate=true;
+ // Bevel only worktop edges; structural/collision dimensions remain unchanged.
+ scene.traverse(o=>{if(o.material!==worktop||o.geometry?.type!=='BoxGeometry')return;const {width:w,height:h,depth:d}=o.geometry.parameters;const r=Math.min(.018,h/4),shape=new T.Shape();
+ shape.moveTo(-w/2+r,-h/2);shape.lineTo(w/2-r,-h/2);shape.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);shape.lineTo(w/2,h/2-r);shape.quadraticCurveTo(w/2,h/2,w/2-r,h/2);shape.lineTo(-w/2+r,h/2);shape.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);shape.lineTo(-w/2,-h/2+r);shape.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);
+ const geo=new T.ExtrudeGeometry(shape,{depth:d-2*r,bevelEnabled:true,bevelThickness:r,bevelSize:r,bevelSegments:2,curveSegments:3,steps:1});geo.translate(0,0,-d/2+r);o.geometry=geo;
+ });
+ // Instrument displays are physically attached screens, distinct from the interaction HUD.
+ for(const [device,width,title,subtitle] of [[pcr,.65,'THERMAL CYCLER','READY   /   24.0 C'],[sequencer,.64,'SEQUENCE ANALYZER','IDLE   /   SAMPLE --']]){
+ const screen=device.children.find(o=>o.geometry?.type==='PlaneGeometry'&&Math.abs(o.geometry.parameters.width-width)<.001);if(!screen)continue;
+ const cv=document.createElement('canvas');cv.width=768;cv.height=256;const dc=cv.getContext('2d');dc.fillStyle='#102c34';dc.fillRect(0,0,768,256);dc.fillStyle='#69abaf';dc.fillRect(12,12,744,40);dc.fillStyle='#102732';dc.font='bold 25px monospace';dc.fillText(title,28,41);dc.fillStyle='#d3e8d8';dc.font='30px monospace';dc.fillText(subtitle,28,102);
+ dc.strokeStyle='#37636c';for(let y=132;y<240;y+=24){dc.beginPath();dc.moveTo(25,y);dc.lineTo(740,y);dc.stroke()}dc.strokeStyle='#a5d7b7';dc.lineWidth=3;dc.beginPath();dc.moveTo(25,207);dc.lineTo(160,207);dc.lineTo(165,155);dc.lineTo(300,155);dc.lineTo(305,207);dc.lineTo(450,207);dc.stroke();dc.fillStyle='#a6bdbd';dc.font='18px monospace';dc.fillText('SYSTEM ONLINE',510,225);
+ const map=new T.CanvasTexture(cv);map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;screen.material=new T.MeshBasicMaterial({map});
+ }
+
 }

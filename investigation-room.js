@@ -1,4 +1,4 @@
-import {addLabDetail} from './lab-detail.js?v=1';
+import {addLabDetail} from './lab-detail.js?v=2';
 import {addLabFittings} from './lab-fittings.js?v=2';
 import * as T from './vendor/three.module.js';
 // Full-size first-person room; decorative props stay inside collision footprints.
