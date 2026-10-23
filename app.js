@@ -48,24 +48,28 @@ function comparisonSource(record){
   const rows=people.map(p=>{const match=record.body.match(new RegExp(p[0]+': (\\d{2}:\\d{2}) 입실 / (\\d{2}:\\d{2}) 퇴실'));return `<tr><th scope="row">${p[0]}</th><td>${match?match[1]:'출입 없음'}</td><td>${match?match[2]:'—'}</td></tr>`}).join('');
   return `<table class="access-comparison"><caption>08:40–08:50 출입 기록</caption><thead><tr><th scope="col">이름</th><th scope="col">입실</th><th scope="col">퇴실</th></tr></thead><tbody>${rows}</tbody></table><details class="source-help"><summary>출입 기록 원문 · 장치와 접근 조건</summary><p>${esc(record.body)}</p></details>`;
  }
+ if(record.id==='e-analysis'){
+  const rows=record.body.split('\n').filter(line=>/^[^:]+: [ACGT]+$/.test(line)).map(line=>{const [name,dna]=line.split(': ');return `<tr><th scope="row">${esc(name)}</th><td><code>${esc(dna)}</code></td></tr>`}).join('');
+  return `<table class="access-comparison sequence-comparison"><caption>시료별 표적 구간</caption><thead><tr><th scope="col">시료</th><th scope="col">염기서열</th></tr></thead><tbody>${rows}</tbody></table><p class="sequence-note">식물의 짧은 DNA 구간입니다. 사람의 신원을 검사한 결과가 아닙니다.</p><details class="source-help"><summary>검사 기록 원문</summary><p>${esc(record.body)}</p></details>`;
+ }
  return `<p class="comparison-source">${esc(record.body).replace(/(08:47 강서윤|08:49 민도현)/g,'\n\n$1')}</p>`;
 }
 function comparisonPanel(entries){
  const evidence=entries.filter(e=>e.id.startsWith('e-')),i=comparisonPerson,p=people[i],c=state.comparisons?.[i]||{},record=evidence.find(e=>e.id===c.record);
  return `<section class="comparison-desk" aria-label="진술과 증거 비교">
  <div class="person-picker" aria-label="비교할 용의자">${people.map((person,j)=>`<button data-person="${j}" aria-pressed="${i===j}"><b>${person[0]}</b><span>${person[1]}</span></button>`).join('')}</div>
- <div class="comparison-columns">
- <article class="statement-pane"><span class="compare-label">01 / 용의자의 주장</span><h3>${p[0]}의 진술</h3><blockquote>${p[2]}</blockquote><details class="confirmed-context"><summary>사전에 확인된 정황 보기</summary><p>${dossierDetails[i].facts}</p></details></article>
- <article class="source-pane"><span class="compare-label">02 / 대조할 기록</span><div class="source-picker" aria-label="확보한 증거 선택">${evidence.map(e=>`<button data-source="${e.id}" aria-pressed="${c.record===e.id}">${e.title}</button>`).join('')||'<p>현장에서 증거를 확보하면 여기에 선택 버튼이 생깁니다.</p>'}</div>
+ <div class="comparison-reading-layout"><div class="evidence-rail"><h3>비교할 증거</h3><div class="source-picker" aria-label="확보한 증거 선택">${evidence.map(e=>`<button data-source="${e.id}" aria-pressed="${c.record===e.id}">${e.title}</button>`).join('')||'<p>현장에서 확보한 증거가 이곳에 표시됩니다.</p>'}</div></div><div class="comparison-columns">
+ <article class="statement-pane"><span class="compare-label">용의자는 이렇게 말했다</span><h3>${p[0]}의 진술</h3><blockquote>${p[2]}</blockquote><details class="confirmed-context"><summary>확인된 정황</summary><p>${dossierDetails[i].facts}</p></details></article>
+ <article class="source-pane"><span class="compare-label">기록에는 이렇게 남아 있다</span>
  <div class="selected-source" aria-live="polite">${record?`<h3>${record.title}</h3><div id="compare-source-${i}">${comparisonSource(record)}</div><details class="source-help"><summary>이 기록의 의미와 한계</summary><p>${evidenceMeaning[record.id][1]}</p><p>${evidenceMeaning[record.id][2]}</p></details>`:'<div class="source-placeholder"><b>비교할 기록을 선택하세요</b><p>선택한 기록의 원문이 이곳에 표시됩니다.<br>왼쪽 진술과 시간·행동이 일치하는지 살펴보세요.</p></div>'}</div></article>
- </div>
+ </div></div>
  <div class="comparison-verdict"><div><label for="judgment-${i}">03 / 두 자료를 비교한 나의 판단</label><select id="judgment-${i}" data-compare="${i}" data-field="judgment">${['판단 보류','진술과 일치','진술과 모순','이 기록으로는 확인 불가'].map(v=>`<option ${c.judgment===v?'selected':''}>${v}</option>`).join('')}</select></div><div><label for="basis-${i}">판단 근거 · 자동 저장</label><textarea id="basis-${i}" data-compare="${i}" data-field="basis" maxlength="2000" placeholder="주장의 어느 부분과 기록의 어떤 내용이 맞거나 다른가요?">${esc(c.basis||'')}</textarea></div></div>
  <div class="comparison-footer"><span>이 판단은 나의 가설입니다. 다른 기록과도 비교해 보세요.</span><button data-open-tab="report">수사 보고서 작성 →</button></div></section>`;
 }
 
 function board(){
  const entries=boardEntries(),shown=entries.filter(e=>boardFilter==='all'||e.type===boardFilter);
- $('#content').innerHTML=`<div class="section-top"><h2>내 증거 보드</h2><span class="tag">확보한 기록 ${entries.length}건</span></div>
+ $('#content').innerHTML=`<div class="section-top"><h2>내 증거 보드</h2><span class="tag">기록 ${entries.length}건 · 읽기 화면 v18</span></div>
  <div class="board-view-switch" aria-label="증거 보드 보기">${[['compare','진술 ↔ 증거 비교'],['records','전체 기록 · 메모']].map(([id,label])=>`<button data-board-view="${id}" aria-pressed="${boardView===id}">${label}</button>`).join('')}</div>
  ${boardView==='compare'?comparisonPanel(entries):`<p class="board-intro">확보한 기록과 학습 풀이입니다. 비교 화면에서 진술과 대조할 수 있습니다.</p>
  <div class="board-filters" aria-label="기록 종류">${[['all','전체'],['현장 기록','현장 기록'],['검사 결과','검사 결과'],['분석 기록','학습·해석 기록']].map(([id,t])=>`<button data-filter="${id}" aria-pressed="${boardFilter===id}" class="${boardFilter===id?'active':''}">${t}</button>`).join('')}</div>
