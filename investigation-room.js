@@ -4,8 +4,8 @@ import * as T from './vendor/three.module.js';
 // Full-size first-person room; decorative props stay inside collision footprints.
 export function buildInvestigationRoom({scene,renderer,object,actions,leave}){
  let seed=17;const random=()=>((seed=seed*16807%2147483647)-1)/2147483646;
- function texture(color,tile=false){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');x.fillStyle=color;x.fillRect(0,0,256,256);for(let i=0;i<3000;i++){x.fillStyle=i%2?'#ffffff09':'#00131909';x.fillRect(random()*256,random()*256,1,1)}if(tile){x.strokeStyle='#293b4080';x.lineWidth=2;x.strokeRect(0,0,256,256)}const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.anisotropy=4;return t}
- const wall=new T.MeshStandardMaterial({map:texture('#d4d7d0'),roughness:.9});const floor=new T.MeshStandardMaterial({map:texture('#bab9ad',true),roughness:.52});floor.map.wrapS=floor.map.wrapT=T.RepeatWrapping;floor.map.repeat.set(9,7);
+ function texture(color,tile=false){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');x.fillStyle=color;x.fillRect(0,0,256,256);for(let i=0;i<3000;i++){x.fillStyle=i%2?'#ffffff09':'#00131909';x.fillRect(random()*256,random()*256,1,1)}for(let i=0;i<90;i++){x.fillStyle='#172b3010';x.fillRect(random()*256,random()*256,random()*20+2,1)}const edge=x.createLinearGradient(0,0,0,256);edge.addColorStop(0,'#11212520');edge.addColorStop(.5,'#00000000');edge.addColorStop(1,'#11212535');x.fillStyle=edge;x.fillRect(0,0,256,256);if(tile){x.strokeStyle='#293b4080';x.lineWidth=2;x.strokeRect(0,0,256,256)}const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.anisotropy=4;return t}
+ const wall=new T.MeshStandardMaterial({map:texture('#d4d7d0'),roughness:.9});const floor=new T.MeshStandardMaterial({map:texture('#bab9ad',true),roughness:.72,bumpScale:.012});floor.bumpMap=floor.map;floor.map.wrapS=floor.map.wrapT=T.RepeatWrapping;floor.map.repeat.set(9,7);
  const steel=new T.MeshStandardMaterial({color:'#a7b4b5',metalness:.65,roughness:.32}),dark=new T.MeshStandardMaterial({color:'#263c46',roughness:.6}),top=new T.MeshStandardMaterial({color:'#e0e3db',roughness:.36}),wood=new T.MeshStandardMaterial({map:texture('#e1e3da'),roughness:.5}),worktop=new T.MeshStandardMaterial({color:'#20282c',roughness:.32,metalness:.12});
  const glass=new T.MeshPhysicalMaterial({color:'#bce4df',transparent:true,opacity:.2,roughness:.08,metalness:.08,depthWrite:false,side:T.DoubleSide});
  const signTextures=new Map();
@@ -21,7 +21,7 @@ export function buildInvestigationRoom({scene,renderer,object,actions,leave}){
   for(let i=0;i<n;i++){const px=x-w/2+cell*(i+.5);for(let j=0;j<3;j++){box(px,.26+j*.23,z+d/2+.012,cell-.035,.21,.035,top);box(px,.32+j*.23,z+d/2+.055,cell*.55,.022,.035,steel)}}
   box(x,.08,z,w,.12,d*.85,dark);
  }
- function light(x,z,color){box(x,3.62,z,2.1,.1,.65,dark);const m=new T.MeshStandardMaterial({color,emissive:color,emissiveIntensity:1.6});box(x,3.55,z,1.9,.025,.47,m);const p=new T.PointLight(color,14,11,2);p.position.set(x,3.2,z);scene.add(p)}
+ function light(x,z,color){box(x,3.62,z,2.1,.1,.65,dark);const m=new T.MeshStandardMaterial({color,emissive:color,emissiveIntensity:1.6});box(x,3.55,z,1.9,.025,.47,m);const p=new T.PointLight(color,8,9,2);p.position.set(x,3.2,z);scene.add(p)}
  function tent(n,x,z,parent=scene){const g=new T.Group();g.position.set(x,1.02,z);parent.add(g);const a=box(0,.1,0,.18,.2,.01,'#d5b05b',g);a.rotation.x=-.2;sign(n,0,.11,.025,.15,.15,g,'#292b25','#d5b05b')}
  box(0,-.1,0,18,.2,14,floor);box(0,1.9,-7,18,3.8,.18,wall);box(-9,1.9,0,.18,3.8,14,wall);
  const firstWalls=new T.Group();scene.add(firstWalls);box(9,1.9,0,.18,3.8,14,wall,firstWalls);box(0,1.9,7,18,3.8,.18,wall,firstWalls);box(0,3.85,0,18,.12,14,'#c5cac6',firstWalls);
@@ -35,8 +35,8 @@ export function buildInvestigationRoom({scene,renderer,object,actions,leave}){
  }
  // Window, lower wall panels and service lines give depth to the room shell.
  // Broad daylight windows with an exterior facade texture and metal mullions.
- const cv=document.createElement('canvas');cv.width=1024;cv.height=512;const cx=cv.getContext('2d');const sky=cx.createLinearGradient(0,0,0,512);sky.addColorStop(0,'#b8dae9');sky.addColorStop(1,'#d6e2dd');cx.fillStyle=sky;cx.fillRect(0,0,1024,512);
- for(let x=0;x<1024;x+=96){cx.fillStyle=x%192?'#83a9bc':'#91b5c4';cx.fillRect(x,20,83,492);for(let y=38;y<512;y+=76){cx.fillStyle='#c1dbe2';cx.fillRect(x,y,83,6);cx.fillStyle='#d7e7e8';cx.fillRect(x+36,y,5,76)}}
+ const cv=document.createElement('canvas');cv.width=1024;cv.height=512;const cx=cv.getContext('2d');const sky=cx.createLinearGradient(0,0,0,512);sky.addColorStop(0,'#5e7888');sky.addColorStop(1,'#8e9c99');cx.fillStyle=sky;cx.fillRect(0,0,1024,512);
+ for(let x=0;x<1024;x+=96){cx.fillStyle=x%192?'#4c6674':'#617984';cx.fillRect(x,20,83,492);for(let y=38;y<512;y+=76){cx.fillStyle='#849ca7';cx.fillRect(x,y,83,6);cx.fillStyle='#a2b2b6';cx.fillRect(x+36,y,5,76)}}
  const view=new T.CanvasTexture(cv);view.colorSpace=T.SRGBColorSpace;
  box(0,2.12,-6.78,16.4,2.8,.06,new T.MeshBasicMaterial({map:view}));
  for(let x=-8.2;x<=8.21;x+=1.64)box(x,2.12,-6.69,.075,2.9,.1,top);for(const y of [.7,1.5,3.55])box(0,y,-6.67,16.6,.065,.12,top);box(0,.65,-6.55,16.7,.1,.4,top);

@@ -1,3 +1,4 @@
+import {createMotion} from './object-motion.js?v=1';
 import * as T from './vendor/three.module.js';
 import {forensicClues} from './forensic-case.js?v=1';
 // One state machine serves scene actions, inventory, lab stages and saved progress.
@@ -6,26 +7,41 @@ export function createForensicField({scene,object,box,cyl,modal,save,mark,done,c
  function show(title,body,actions=[]){modal('현장 감식 · '+title,body,actions)}
  function read(id){const c=record(id);evidence([id]);show(c[2],`<p style="white-space:pre-line">${c[3]}</p>`)}
  function grant(id){mark(id);evidence([id])}
- const fixtures=[];
- function fixture(id,name,x,y,z){const o=object(name,x,y,z,()=>inspect(id));o.userData.id=id;fixtures.push(o);return o}
+ const fixtures=[],motions=[];let drawerMotion,emptyMotion,boxMotion;
+ function toggle(id){({"trace-drawer":drawerMotion,"trace-empty":emptyMotion,"trace-box":boxMotion}[id]).toggle();redraw()}
+ function fixture(id,name,x,y,z){const o=object(name,x,y,z,()=>toggle(id));o.userData.id=id;fixtures.push(o);return o}
  const drawers=fixture('trace-drawer','정리 서랍 · 열어 조사',-2.15,.52,-3.39);
  box(0,0,0,.72,.26,.08,'#ced3cb',drawers);box(0,.03,.065,.38,.025,.04,'#526976',drawers);
  const tray=box(0,-.08,-.14,.65,.04,.45,'#41535b',drawers);
  const paper=box(0,-.05,-.1,.3,.006,.22,'#e8dfc2',drawers);
+ box(-2.15,.52,-3.42,.71,.25,.02,'#18242a');
  const empty=fixture('trace-empty','소모품 서랍',3.2,.48,-3.15);box(0,0,0,.62,.24,.06,'#ced3cb',empty);box(0,0,.055,.25,.025,.035,'#526976',empty);
+ box(3.2,.48,-3.18,.61,.23,.02,'#18242a');
  const cargo=fixture('trace-box','운반 상자 K-2',-5.8,1.01,3);
  box(0,.025,0,.8,.05,.55,'#424b48',cargo);
- for(const x of [-.39,.39])box(x,.19,0,.035,.34,.55,'#777c66',cargo);
- for(const z of [-.26,.26])box(0,.19,z,.8,.34,.035,'#777c66',cargo);
- box(0,.07,0,.7,.018,.44,'#d2c7a5',cargo);
- const lid=box(0,.4,-.19,.8,.045,.55,'#626e64',cargo);lid.rotation.x=-.25;
- const hair=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([new T.Vector3(-.15,.09,0),new T.Vector3(-.06,.095,.06),new T.Vector3(.02,.1,.04)]),16,.004,5,false),new T.MeshStandardMaterial({color:'#2e2016'}));cargo.add(hair);
- const residue=box(.2,.09,-.12,.08,.012,.055,'#536d35',cargo);residue.visible=false;
+ for(const x of [-.39,.39])box(x,.13,0,.035,.22,.55,'#777c66',cargo);
+ for(const z of [-.26,.26])box(0,.13,z,.8,.22,.035,'#777c66',cargo);
+ box(0,.12,0,.7,.1,.44,'#d2c7a5',cargo);
+ const lid=new T.Group();lid.position.set(0,.37,-.28);cargo.add(lid);box(0,0,.28,.84,.055,.58,'#626e64',lid);for(const x of [-.39,.39])box(x,-.07,.28,.035,.14,.55,'#626e64',lid);for(const z of [0,.55])box(0,-.07,z,.8,.14,.035,'#626e64',lid);
+ for(const x of [-.27,.27]){box(x,-.015,0,.12,.05,.06,'#8c9693',lid);box(x,.035,.4,.045,.035,.2,'#a5aaa0',lid)}
+ const hair=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([new T.Vector3(-.15,.09,0),new T.Vector3(-.06,.095,.06),new T.Vector3(.02,.1,.04)]),16,.0007,5,false),new T.MeshStandardMaterial({color:'#2e2016'}));hair.position.y=.09;cargo.add(hair);
+ const residue=box(.2,.18,-.12,.08,.012,.055,'#536d35',cargo);residue.visible=false;
  const prints=new T.Group();drawers.add(prints);prints.position.set(.15,.03,.09);for(let i=0;i<6;i++){const ring=new T.Mesh(new T.TorusGeometry(.014+i*.005,.0014,4,24,Math.PI*1.6),new T.MeshBasicMaterial({color:'#b9e875'}));ring.scale.y=1.4;prints.add(ring)}prints.visible=false;
  const lamp=new T.PointLight('#527cff',0,3,2);lamp.position.set(-5.8,1.5,3);scene.add(lamp);
- function restore(){lamp.position.set(-5.8,1.5,3);empty.position.z=done('empty-open')?-2.94:-3.15;drawers.position.z=done('cleaning')?-3.12:-3.39;lid.rotation.x=done('box-open')?-1.6:-.25;hair.visible=!has('hair-sample');residue.visible=done('lamp-scan');prints.visible=done('print-lit');lamp.intensity=done('lamp-scan')?4:0;redraw()}
+ function interior(id,name,parent,x,y,z,w,d,action){const o=object(name,x,y,z,action);o.userData.id=id;parent.add(o);box(0,0,0,w,.012,d,'#c6b98d',o);o.visible=false;return o}
+ const documentTarget=interior('trace-document','확인서 · 읽기 / 손잡이 감식',drawers,0,-.045,-.19,.31,.23,()=>{if(drawerMotion.value>.95)inspect('trace-drawer')});
+ const linerTarget=interior('trace-liner','K-2 내부 · 흔적 조사',cargo,0,.174,0,.6,.37,()=>{if(boxMotion.value>.95)inspect('trace-box')});
+ const supplies=interior('trace-supplies','소모품 · 살펴보기',empty,0,-.07,-.15,.46,.28,()=>{if(emptyMotion.value>.95)inspect('trace-empty')});
+ for(const [parent,w] of [[drawers,.67],[empty,.57]]){for(const x of [-w/2,w/2])box(x,0,-.23,.025,.2,.48,'#65727a',parent);box(0,-.09,-.24,w,.025,.48,'#3b4b54',parent);box(0,0,-.47,w,.2,.02,'#65727a',parent)}
+ for(let i=0;i<4;i++){box(-.15+i*.1,.04,-.18,.07,.045,.2,'#b6c9bf',supplies)}
+ drawerMotion=createMotion({apply:v=>{drawers.position.z=-3.39+v*.52;documentTarget.visible=v>.75;drawers.userData.name=v>.5?'정리 서랍 · 닫기':'정리 서랍 · 열기'}});
+ emptyMotion=createMotion({apply:v=>{empty.position.z=-3.15+v*.45;supplies.visible=v>.75;empty.userData.name=v>.5?'소모품 서랍 · 닫기':'소모품 서랍 · 열기'}});
+ boxMotion=createMotion({duration:.85,apply:v=>{lid.rotation.x=-v*1.85;linerTarget.visible=v>.8;cargo.userData.name=v>.5?'K-2 상자 · 닫기':'K-2 상자 · 열기'}});
+ motions.push(drawerMotion,emptyMotion,boxMotion);motions.forEach(m=>m.reset());
+ function restore(){lamp.position.set(-5.8,1.5,3);hair.visible=!has('hair-sample');residue.visible=done('lamp-scan');prints.visible=done('print-lit');lamp.intensity=done('lamp-scan')?4:0;redraw()}
+
  function inspect(id){
-  if(id==='trace-empty'){mark('empty-open');restore();return show('소모품 서랍','<p>서랍을 열었다. 밀봉된 피펫 팁과 빈 장갑 포장이 있다. 훼손이나 채취할 흔적은 보이지 않는다. 모든 물건이 결정적 증거인 것은 아니다.</p>')}
+  if(id==='trace-empty'){mark('empty-open');return show('소모품 서랍','<p>서랍을 열었다. 밀봉된 피펫 팁과 빈 장갑 포장이 있다. 훼손이나 채취할 흔적은 보이지 않는다. 모든 물건이 결정적 증거인 것은 아니다.</p>')}
   if(id==='trace-drawer'){
    grant('cleaning');restore();return show('서랍 안의 확인서',`<p>${record('cleaning')[3]}</p><p>손잡이의 접촉 흔적은 맨눈으로 구분되지 않는다.</p>`,[[done('print')?'지문 결과 다시 보기':'손잡이 지문 감식',()=>{if(!has('print-kit'))return show('지문 감식 장비 필요','<p>정밀감식 지원을 요청한 뒤 장비함에서 키트를 수령하세요.</p>');if(!done('print-developed')){mark('print-developed');restore();return show('형광 분말 처리 완료','<p>수업용 감식 절차입니다. 분말이 잠재 지문에 부착됐다. 감식 광원과 관찰 필터를 사용해 융선을 확인하세요. 실제 처리는 훈련받은 감식요원이 수행합니다.</p>',[['감식 광원 켜기',()=>{mark('print-lit');restore();lamp.position.copy(drawers.position);lamp.position.y=1;lamp.intensity=4;redraw();show('지문이 드러났다','<p>융선이 보인다. 지문을 촬영하고 전사해 대조 검사를 요청할 수 있다.</p>',[['촬영·전사 후 대조 의뢰',()=>{grant('print');read('print')}]]);}]]);}if(!done('print'))return show('지문 관찰·기록', '<p>처리한 손잡이에 광원과 필터를 적용해 관찰한 뒤 촬영·전사하세요.</p>',[['광원 관찰 후 촬영·전사',()=>{mark('print-lit');grant('print');restore();read('print')}]]);read('print')}]]);
   }
@@ -52,5 +68,5 @@ export function createForensicField({scene,object,box,cyl,modal,save,mark,done,c
   if(!ids.length)show('채취된 시료 없음','<p>현장 물건을 조사해 시료를 개별 채취하세요.</p>');
  }
  function restoreEvidence(){for(const [id]of forensicClues)if(done(id))evidence([id]);restore()}
- return {support,samples,restore:restoreEvidence,inspect};
+ return {support,samples,restore:restoreEvidence,inspect,update(dt){let changed=false;for(const m of motions)changed=m.update(dt)||changed;return changed},resetMotion(){motions.forEach(m=>m.reset())}};
 }

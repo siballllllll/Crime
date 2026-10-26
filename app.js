@@ -73,7 +73,7 @@ function comparisonPanel(entries){
 
 function board(){
  const entries=boardEntries(),shown=entries.filter(e=>boardFilter==='all'||e.type===boardFilter);
- $('#content').innerHTML=`<div class="section-top"><h2>내 증거 보드</h2><span class="tag">기록 ${entries.length}건 · 현장 감식 v19</span></div>
+ $('#content').innerHTML=`<div class="section-top"><h2>내 증거 보드</h2><span class="tag">기록 ${entries.length}건 · 현장 감식 v20</span></div>
  <div class="board-view-switch" aria-label="증거 보드 보기">${[['links','흔적 연결'],['compare','진술 ↔ 증거 비교'],['records','전체 기록 · 메모']].map(([id,label])=>`<button data-board-view="${id}" aria-pressed="${boardView===id}">${label}</button>`).join('')}</div>
  ${boardView==='links'?traceLinks(entries):boardView==='compare'?comparisonPanel(entries):`<p class="board-intro">확보한 기록과 학습 풀이입니다. 비교 화면에서 진술과 대조할 수 있습니다.</p>
  <div class="board-filters" aria-label="기록 종류">${[['all','전체'],['현장 기록','현장 기록'],['검사 결과','검사 결과'],['분석 기록','학습·해석 기록']].map(([id,t])=>`<button data-filter="${id}" aria-pressed="${boardFilter===id}" class="${boardFilter===id?'active':''}">${t}</button>`).join('')}</div>

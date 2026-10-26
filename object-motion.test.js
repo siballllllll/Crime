@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {createMotion} from './object-motion.js';
+test('movement is gradual, reversible in flight and settles exactly at either endpoint',()=>{let pose=0;const m=createMotion({apply:v=>pose=v});m.toggle();m.update(.05);assert(pose>0&&pose<1);m.toggle();for(let i=0;i<20;i++)m.update(.05);assert.equal(pose,0);m.toggle();for(let i=0;i<20;i++)m.update(.05);assert.equal(pose,1);assert.equal(m.update(.05),false);m.reset();assert.equal(pose,0)});
